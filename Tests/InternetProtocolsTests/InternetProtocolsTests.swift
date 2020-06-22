@@ -9,7 +9,281 @@ import Foundation
 import XCTest
 import Datable
 import Bits
+import SwiftPCAP
 @testable import InternetProtocols
+
+
+func convertMACtoBytes (inputString: String) -> Data
+{
+    let bytesString = inputString.components(separatedBy:":")
+    var MACData = Data()
+    //var address = Bits()
+    for byte in bytesString
+    {
+        if let byteUInt8 = UInt8(byte, radix:16)
+        {
+            MACData.append(byteUInt8)
+        }
+    }
+    return MACData
+}
+
+func convertIPtoBytes (inputString: String) -> Data
+{
+    let intsString = inputString.components(separatedBy:".")
+    
+    var ipData = Data()
+
+    for int in intsString
+    {
+        if let byteUInt8 = UInt8(int, radix:10)
+        {
+            ipData.append(byteUInt8)
+        }
+    }
+    return ipData
+    
+}
+
+
+
+struct tsharkTextFilePacket
+{
+    var frame_number: Int
+    var eth_dst: Data
+    var eth_src: Data
+    var eth_type: EtherType
+    var ip_version: UInt8?
+    var ip_hdr_len: UInt8?
+    var ip_dsfield_dscp: UInt8?
+    var ip_dsfield_ecn: UInt8?
+    var ip_len: UInt16?
+    var ip_id: UInt16?
+    var ip_flags_rb: Bool
+    var ip_flags_df: Bool
+    var ip_flags_mf: Bool
+    
+    
+    /*
+
+    public let fragmentOffset: Bits //UInt16 //13 bits   --number
+    public let ttl: UInt8 //1 byte   --number
+    public let protocolNumber: IPprotocolNumber //UInt8 //1 byte
+    public let checksum: UInt16 //2 bytes
+    public let sourceAddress: Data //4 bytes
+    public let destinationAddress: Data //4 bytes
+    public let options: Data? //up to 32 bytes
+    public let payload: Data?
+    */
+    
+    var ip_frag_offset: UInt16?
+    var ip_ttl: UInt8?
+    var ip_proto: IPprotocolNumber?
+    var ip_checksum: UInt16?
+    var ip_src: Data
+    var ip_dst: Data
+    
+    
+    
+    var tcp_srcport: String
+    var tcp_dstport: String
+    var tcp_seq: String
+    var tcp_ack: String
+    var tcp_hdr_len: String
+    var tcp_flags_res: String
+    var tcp_flags_ns: String
+    var tcp_flags_cwr: String
+    var tcp_flags_ecn: String
+    var tcp_flags_urg: String
+    var tcp_flags_ack: String
+    var tcp_flags_push: String
+    var tcp_flags_reset: String
+    var tcp_flags_syn: String
+    var tcp_flags_fin: String
+    var tcp_window_size_value: String
+    var tcp_checksum: String
+    var tcp_urgent_pointer: String
+    var tcp_options: String
+    var tcp_payload: String
+    var udp_srcport: String
+    var udp_dstport: String
+    var udp_length: String
+    var udp_checksum: String
+    
+    
+    init(lineToParse: String)
+    {
+        let values = lineToParse.components(separatedBy:"\t")
+        if values.count == 43
+        {
+            self.frame_number = Int(string: values[0])
+            self.eth_dst = convertMACtoBytes(inputString: values[1])
+            self.eth_src = convertMACtoBytes(inputString: values[2])
+            self.eth_type = EtherType(rawValue: UInt16(values[3].replacingOccurrences(of: "0x", with: ""), radix:16)!)!
+            
+            if values[4] != ""
+            {
+                self.ip_version = UInt8(string: values[4].components(separatedBy: ",")[0])
+            }
+            else { self.ip_version = nil }
+            
+            if values[5] != ""
+            {
+                self.ip_hdr_len = UInt8(string: values[5].components(separatedBy: ",")[0])/4
+            }
+            else { self.ip_hdr_len = nil }
+            
+            if values[6] != ""
+            {
+                self.ip_dsfield_dscp = UInt8(string: values[6].components(separatedBy: ",")[0])
+            }
+            else { self.ip_dsfield_dscp = nil }
+            
+            if values[7] != ""
+            {
+                self.ip_dsfield_ecn = UInt8(string: values[7].components(separatedBy: ",")[0])
+            }
+            else { self.ip_dsfield_ecn = nil }
+            
+            if values[8] != ""
+            {
+                self.ip_len = UInt16(string: values[8].components(separatedBy: ",")[0])
+            }
+            else { self.ip_len = nil }
+            
+            if values[9] != ""
+            {
+                self.ip_id = UInt16( values[9].components(separatedBy: ",")[0].replacingOccurrences(of: "0x", with: ""), radix:16 )!
+            }
+            else { self.ip_id = nil }
+            
+            if values[10].components(separatedBy: ",")[0] == "0"
+            {
+                self.ip_flags_rb = false
+            }
+            else { self.ip_flags_rb = true }
+            
+            if values[11].components(separatedBy: ",")[0] == "0"
+            {
+                self.ip_flags_df = false
+            }
+            else { self.ip_flags_df = true }
+            
+            if values[12].components(separatedBy: ",")[0] == "0"
+            {
+                self.ip_flags_mf = false
+            }
+            else { self.ip_flags_mf = true }
+            
+            if values[13] != ""
+            {
+                self.ip_frag_offset = UInt16(string: values[13].components(separatedBy: ",")[0])
+            }
+            else { self.ip_frag_offset = nil }
+            
+            if values[14] != ""
+            {
+                self.ip_ttl = UInt8(string: values[14].components(separatedBy: ",")[0])
+            }
+            else { self.ip_ttl = nil }
+            
+            if values[15] != ""
+            {
+                self.ip_proto = IPprotocolNumber(data: UInt8(string: values[15].components(separatedBy: ",")[0]).data)!
+            }
+            else { self.ip_proto = nil }
+           
+            
+            if values[16] != ""
+            {
+                self.ip_checksum = UInt16( values[16].components(separatedBy: ",")[0].replacingOccurrences(of: "0x", with: ""), radix:16 )!
+            }
+            else { self.ip_checksum = nil }
+            
+            
+            self.ip_src = convertIPtoBytes (inputString: values[17].components(separatedBy: ",")[0])
+            self.ip_dst = convertIPtoBytes (inputString: values[18].components(separatedBy: ",")[0])
+            
+            
+            self.tcp_srcport = values[19]
+            self.tcp_dstport = values[20]
+            self.tcp_seq = values[21]
+            self.tcp_ack = values[22]
+            self.tcp_hdr_len = values[23]
+            self.tcp_flags_res = values[24]
+            self.tcp_flags_ns = values[25]
+            self.tcp_flags_cwr = values[26]
+            self.tcp_flags_ecn = values[27]
+            self.tcp_flags_urg = values[28]
+            self.tcp_flags_ack = values[29]
+            self.tcp_flags_push = values[30]
+            self.tcp_flags_reset = values[31]
+            self.tcp_flags_syn = values[32]
+            self.tcp_flags_fin = values[33]
+            self.tcp_window_size_value = values[34]
+            self.tcp_checksum = values[35]
+            self.tcp_urgent_pointer = values[36]
+            self.tcp_options = values[37]
+            self.tcp_payload = values[38]
+            
+            
+            self.udp_srcport = values[39]
+            self.udp_dstport = values[40]
+            self.udp_length = values[41]
+            self.udp_checksum = values[42]
+        }
+        else
+        {
+            print("‼️ Failed to parse line from text file, likely wrong column count or delimiters")
+            self.frame_number = 0xFFFF
+            self.eth_dst = ""
+            self.eth_src = ""
+            self.eth_type = EtherType(rawValue: 0xFFFF)!
+            self.ip_version = 0xFF
+            self.ip_hdr_len = 0xFF
+            self.ip_dsfield_dscp = 0xFF
+            self.ip_dsfield_ecn = 0xFF
+            self.ip_len = 0xFFFF
+            self.ip_id = 0xFFFF
+            self.ip_flags_rb = true
+            self.ip_flags_df = true
+            self.ip_flags_mf = true
+            self.ip_frag_offset = 0xFFFF
+            self.ip_ttl = 0xFF
+            self.ip_proto = nil
+            self.ip_checksum = 0xFFFF
+            self.ip_src = ""
+            self.ip_dst = ""
+            
+            self.tcp_srcport = ""
+            self.tcp_dstport = ""
+            self.tcp_seq = ""
+            self.tcp_ack = ""
+            self.tcp_hdr_len = ""
+            self.tcp_flags_res = ""
+            self.tcp_flags_ns = ""
+            self.tcp_flags_cwr = ""
+            self.tcp_flags_ecn = ""
+            self.tcp_flags_urg = ""
+            self.tcp_flags_ack = ""
+            self.tcp_flags_push = ""
+            self.tcp_flags_reset = ""
+            self.tcp_flags_syn = ""
+            self.tcp_flags_fin = ""
+            self.tcp_window_size_value = ""
+            self.tcp_checksum = ""
+            self.tcp_urgent_pointer = ""
+            self.tcp_options = ""
+            self.tcp_payload = ""
+            self.udp_srcport = ""
+            self.udp_dstport = ""
+            self.udp_length = ""
+            self.udp_checksum = ""
+        }
+    }
+}
+
+
 
 final class ParserTests: XCTestCase
 {
@@ -152,6 +426,7 @@ final class ParserTests: XCTestCase
     {
         //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
         //packet #4
+        debugPrint = true
         let packetBytes = Data(array: [
             0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08, 0x00, 0x45, 0x00,
             0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06, 0x2d, 0xc9, 0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4,
@@ -190,7 +465,6 @@ final class ParserTests: XCTestCase
             return
         }
         
-        
         let correctIPv4checksum: UInt16 = 0x2dc9
         let correctIPv4sourceAddress: Data = Data(array:[0x80, 0x77, 0xf5, 0x0c]) //128.119.245.12
         let correctIPv4destinationAddress: Data = Data(array:[0x83, 0xd4, 0x1f, 0xa7]) //131.212.31.167
@@ -200,6 +474,7 @@ final class ParserTests: XCTestCase
             0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12, 0x05, 0xb4,
             0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4,
             0x01, 0x01, 0x04, 0x02])
+        
         
         if let epacket = Ethernet(data: packetBytes)
         {
@@ -721,4 +996,151 @@ final class ParserTests: XCTestCase
             0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4,
             0x01, 0x01, 0x04, 0x02])
     }
+    
+    
+    func testWithPCAPs() {
+        
+        /*
+         This test function loads a pcap and a text file created by tshark with as many parsed fields as possible. The test then compares the results of InternetProtocols' parsing against Tshark's parsing.
+         Any pcap can be used, just place a copy of the pcap in "TestResources" and rerun  processPCAPsWithTshark.sh to generate the tshark parsed text file.
+
+         Note, this function uses a bundle to access pcap files used for testing
+         These are located in the directory "TestResources"
+         file name requirements:
+         <name>.pcap - pcap file to test against
+         <name>.pcap.txt - tshark pcap parsing results. note these are not the complete packet dissection results but it has most fields and is easy to handle. JSON is a more complete tshark result, but the parsing seems much more involved
+         
+         Notes on adding a bundle using SPM
+         https://medium.com/better-programming/how-to-add-resources-in-swift-package-manager-c437d44ec593
+         https://developer.apple.com/documentation/foundation/bundle
+         */
+        
+        
+        print("👋")
+        let bundleDoingTest = Bundle(for: type(of: self ))
+        print("👉 bundleDoingTest.bundlePath : \(bundleDoingTest.bundlePath)") // …/PATH/TO/Debug/ExampleTests.xctest
+        print("👉 bundleDoingTest = " + bundleDoingTest.description) // Test Case Bundle
+        
+        guard let pcapFileList = bundleDoingTest.urls(forResourcesWithExtension: "pcap", subdirectory: "TestResources") else {return}
+        print("👉 PCAP file count: \(pcapFileList.count)")
+        
+        guard let pcapTextFileList = bundleDoingTest.urls(forResourcesWithExtension: "txt", subdirectory: "TestResources") else {return}
+        print("👉 Text file count: \(pcapFileList.count)\n")
+        
+        var processingFile: Bool = true
+        var packetCount: Int
+        var fileCount: Int = 0
+        
+        for pcapFile in pcapFileList
+        {
+            packetCount = 0
+            fileCount += 1
+            print("📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦")
+            print("📦 Processing PCAP \(fileCount): \(pcapFile.absoluteURL)")
+            
+            guard let packetSource = try? SwiftPCAP.Offline(path: pcapFile.path ) else
+            {
+                print("‼️ Error opening pcap file")
+                return
+            }
+            
+            let pcapTextFilePath = pcapFile.path + ".txt"
+//            guard let pcapTextFile = bundleDoingTest.urls(forResourcesWithExtension: "txt", subdirectory: "TestResources") else {return}
+//            print("👉 Text file count: \(pcapFileList.count)\n")
+            print ("text file: \(pcapTextFilePath)")
+            
+            let textFileURL = URL(fileURLWithPath:pcapTextFilePath)
+            var contents: String = ""
+            print("Loading \(pcapTextFilePath)...")
+            do
+            {
+                contents = try String(contentsOf: textFileURL)
+                print("File loaded...")
+            }
+            catch
+            {
+                print("Failed to load text file due to error \(error).")
+                XCTFail()
+                return
+            }
+            
+            let textFileLines = contents.components(separatedBy:"\n")
+
+            
+            
+            processingFile = true
+
+            print("👉 reading packets")
+            while processingFile
+            {
+                let bytes = packetSource.nextPacket()
+                
+                if bytes.count == 0
+                {
+                    print("👉 done with pcap # \(fileCount)")
+                    processingFile = false
+                }
+                else
+                {
+                    packetCount += 1
+                    print("📁 \(fileCount) ► Packet \(packetCount) - bytes \(bytes.count)")
+                    
+                    let thisTsharkPacket = tsharkTextFilePacket(lineToParse: textFileLines[packetCount])
+                    
+                    XCTAssertEqual(thisTsharkPacket.frame_number, packetCount)
+                    
+                    let thisPacket = Packet(rawBytes: Data(bytes), debugPrints: false) //parse the packet
+                    
+                    
+                    
+                    if thisPacket.ethernet != nil
+                    {
+                        print("➢ checking ethernet")//, terminator:"")
+                        XCTAssertEqual(thisTsharkPacket.eth_src, thisPacket.ethernet!.MACSource)
+                        XCTAssertEqual(thisTsharkPacket.eth_dst, thisPacket.ethernet!.MACDestination)
+                        XCTAssertEqual(thisTsharkPacket.eth_type, thisPacket.ethernet!.type)
+                    }
+                    
+                    if thisPacket.ipv4 != nil
+                    {
+                        print("➢ checking IP")//, terminator:"")
+                        XCTAssertEqual(thisTsharkPacket.ip_version, thisPacket.ipv4!.version.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_hdr_len, thisPacket.ipv4!.IHL.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_dscp, thisPacket.ipv4!.DSCP.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_ecn, thisPacket.ipv4!.ECN.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_len, thisPacket.ipv4!.length)
+                        XCTAssertEqual(thisTsharkPacket.ip_id, thisPacket.ipv4!.identification)
+                        XCTAssertEqual(thisTsharkPacket.ip_flags_rb, thisPacket.ipv4!.reservedBit)
+                        XCTAssertEqual(thisTsharkPacket.ip_flags_df, thisPacket.ipv4!.dontFragment)
+                        XCTAssertEqual(thisTsharkPacket.ip_flags_mf, thisPacket.ipv4!.moreFragments)
+                        XCTAssertEqual(thisTsharkPacket.ip_frag_offset, thisPacket.ipv4!.fragmentOffset.uint16)
+                        XCTAssertEqual(thisTsharkPacket.ip_ttl, thisPacket.ipv4!.ttl)
+                        XCTAssertEqual(thisTsharkPacket.ip_proto, thisPacket.ipv4!.protocolNumber)
+                        XCTAssertEqual(thisTsharkPacket.ip_checksum, thisPacket.ipv4!.checksum)
+                        XCTAssertEqual(thisTsharkPacket.ip_src, thisPacket.ipv4!.sourceAddress)
+                        XCTAssertEqual(thisTsharkPacket.ip_dst, thisPacket.ipv4!.destinationAddress)
+                    }
+                    
+                    
+                    if thisPacket.tcp != nil //capture tcp packet
+                    {
+                        print("➢ checking TCP")//, terminator:"")
+                    }
+                    
+                    if thisPacket.udp != nil //capture tcp packet
+                    {
+                        print("➢ checking UDP")//, terminator:"")
+                    }
+                    
+                    
+                    
+                }
+            }
+        }
+        print("✌️")
+    }
+    
+    
+    
+    
 }
