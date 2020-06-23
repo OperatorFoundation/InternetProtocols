@@ -1,3 +1,3 @@
 # InternetProtocols
 
-A description of this package.
+A Swift library for parsing various Internet protocols
