@@ -51,7 +51,7 @@ public func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, 
     print("")
 }
 
-public struct Packet
+public struct Packet: Codable
 {
     public let rawBytes: Data
     public let timestamp: Int //time in milliseconds since unix epoch
@@ -103,7 +103,7 @@ public struct Packet
 }
 
 // IEEE 802.3 Ethernet frame
-public struct Ethernet
+public struct Ethernet: Codable
 {
     public let MACDestination: Data // 6 bytes
     public let MACSource: Data // 6 bytes
@@ -113,7 +113,7 @@ public struct Ethernet
     public let payload: Data // variable, 46-1500 bytes, specified by length
 }
 
-public enum EtherType: UInt16
+public enum EtherType: UInt16, Codable
 {
     case IPv4 = 0x0800    //Internet Protocol version 4 (IPv4)
     case ARP = 0x0806    //Address Resolution Protocol (ARP)
@@ -140,7 +140,7 @@ public extension EtherType
     }
 }
 
-public struct IPv4
+public struct IPv4: Codable
 {
     //http://www.networksorcery.com/enp/protocol/ip.htm
     
@@ -163,7 +163,7 @@ public struct IPv4
     public let payload: Data?
 }
 
-public struct IPv6
+public struct IPv6: Codable
 {
     public let version: Bits //UInt8 //4 bits
     public let trafficClass: Bits //UInt8 //8 bits
@@ -178,7 +178,7 @@ public struct IPv6
     public let payload: Data
 }
 
-public enum IPversion: Int
+public enum IPversion: Int, Codable
 {
     case IPv4 = 4
     case IPv6 = 6
@@ -200,7 +200,7 @@ extension IPversion
     
 }
 
-public enum IPprotocolNumber: UInt8
+public enum IPprotocolNumber: UInt8, Codable
 {
     //https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
     case ICMP = 0x01
@@ -240,7 +240,7 @@ extension IPprotocolNumber
     
 }
 
-public struct TCP
+public struct TCP: Codable
 {
     public let sourcePort: UInt16 //2 bytes
     public let destinationPort: UInt16 //2 bytes
@@ -264,7 +264,7 @@ public struct TCP
     public let payload: Data?
 }
 
-public struct UDP
+public struct UDP: Codable
 {
     public let sourcePort: UInt16
     public let destinationPort: UInt16
