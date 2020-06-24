@@ -427,7 +427,9 @@ final class ParserTests: XCTestCase
         
         let data = Data(array: [0x08, 0x00])
         
-        let result = Int(data.uint16)
+        let uint16 = data.uint16
+        XCTAssertNotNil(uint16)
+        let result = Int(uint16!)
         
         XCTAssertEqual(correct, result)
     }
@@ -1245,9 +1247,9 @@ final class ParserTests: XCTestCase
                         if debugprint
                         {
                             print("tshark: ")
-                            print(thisTsharkPacket.tcp_payload ?? "nil")
+                            print(thisTsharkPacket.tcp_payload ?? "")
                             print("proto: ")
-                            print(thisPacket.tcp!.payload ?? "nil")
+                            print(thisPacket.tcp!.payload ?? "")
                         }
                         XCTAssertEqual(thisTsharkPacket.tcp_payload, thisPacket.tcp!.payload)
                         

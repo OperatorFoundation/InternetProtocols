@@ -134,7 +134,7 @@ public extension EtherType
     init?(data: Data)
     {
         DatableConfig.endianess = .big
-        let x = UInt16(data.uint16)
+        guard let x = data.uint16 else { return nil}
         self.init(rawValue: x)
     }
     
@@ -234,7 +234,7 @@ extension IPprotocolNumber
 {
     init?(data: Data)
     {
-        let x = data.uint8
+        guard let x = data.uint8 else { return nil }
         self.init(rawValue: x)
     }
     
@@ -317,8 +317,9 @@ extension Ethernet: MaybeDatable
         }
         
         DatableConfig.endianess = .big
-        let typeOrTagUInt16 = typeOrTagPrefix.uint16
+        guard let typeOrTagUInt16 = typeOrTagPrefix.uint16 else { return nil }
         if debugPrint { print("・ typeOrTagPrefix: 0xd\(typeOrTagUInt16)") }
+        
         
         guard let tempType = EtherType(data: typeOrTagUInt16.data) else {
             if debugPrint { print("・ This EtherType is not known to parser") }
@@ -476,12 +477,12 @@ extension IPv4: MaybeDatable
         
         DatableConfig.endianess = .big
         guard let length = bits.unpack(bytes: 2) else { return nil }
-        let lengthUint16 = length.uint16
+        guard let lengthUint16 = length.uint16 else { return nil }
         self.length = lengthUint16
         if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
         
         guard let identification = bits.unpack(bytes: 2) else { return nil }
-        let identificationUint16 = identification.uint16
+        guard let identificationUint16 = identification.uint16 else { return nil }
         self.identification = identificationUint16
         if debugPrint { print("・ Identification: 0x" + String(format: "%02x", self.identification)) }
         DatableConfig.endianess = .little
@@ -507,19 +508,19 @@ extension IPv4: MaybeDatable
         if debugPrint { print("・ FragmentOffset: 0d" + String(format: "%u", fragmentOffsetUint16)) }
         
         guard let ttl = bits.unpack(bytes: 1) else { return nil }
-        let ttlUint8 = ttl.uint8
+        guard let ttlUint8 = ttl.uint8 else { return nil }
         self.ttl = ttlUint8
         if debugPrint { print("・ TTL: 0d" + String(format: "%u", self.ttl)) }
         
         guard let protocolNumber = bits.unpack(bytes: 1) else { return nil } //fix should use IPprotocolNumber()
-        let protocolNumberUint8 = protocolNumber.uint8
+        guard let protocolNumberUint8 = protocolNumber.uint8 else { return nil }
         guard let protocolNumType = IPprotocolNumber(data: protocolNumber) else { return nil }
         self.protocolNumber = protocolNumType
         if debugPrint { print("・ ProtocolNumber: 0d" + String(format: "%u", protocolNumberUint8 ) + " - \(protocolNumType)") }
         
         DatableConfig.endianess = .big
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
-        let checksumUint16 = checksum.uint16
+        guard let checksumUint16 = checksum.uint16 else { return nil }
         self.checksum = checksumUint16
         if debugPrint { print("・ Checksum: 0x" + String(format: "%02x", self.checksum)) }
         DatableConfig.endianess = .little
@@ -626,12 +627,12 @@ extension TCP: MaybeDatable
         
         DatableConfig.endianess = .big
         guard let sourcePort = bits.unpack(bytes: 2) else { return nil }
-        let sourcePortUint16 = sourcePort.uint16
+        guard let sourcePortUint16 = sourcePort.uint16 else { return nil }
         self.sourcePort = sourcePortUint16
         if debugPrint { print("・ sourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - 0d" + String(format: "%u", self.sourcePort)) }
         
         guard let destinationPort = bits.unpack(bytes: 2) else { return nil }
-        let destinationPortUint16 = destinationPort.uint16
+        guard let destinationPortUint16 = destinationPort.uint16 else { return nil }
         self.destinationPort = destinationPortUint16
         if debugPrint { print("・ destPort: 0x" + String(format: "%02x", self.destinationPort) + " - 0d" + String(format: "%u", self.destinationPort)) }
         DatableConfig.endianess = .little
@@ -655,7 +656,7 @@ extension TCP: MaybeDatable
         DatableConfig.endianess = .big
         guard let offsetReservedFlags = bits.unpack(bytes: 2) else { return nil }
         var dataReservedFlagsBits = Bits(data: offsetReservedFlags)
-        let offsetReservedFlagsUint16 = offsetReservedFlags.uint16
+        guard let offsetReservedFlagsUint16 = offsetReservedFlags.uint16 else { return nil }
         if debugPrint { print("・ offsetReservedFlags: 0x" + String(format: "%02x", offsetReservedFlagsUint16) + " - 0b" + String(offsetReservedFlagsUint16, radix: 2)) }
         DatableConfig.endianess = .little
         
@@ -707,17 +708,17 @@ extension TCP: MaybeDatable
         
         DatableConfig.endianess = .big
         guard let windowSize = bits.unpack(bytes: 2) else { return nil }
-        let windowSizeUint16 = windowSize.uint16
+        guard let windowSizeUint16 = windowSize.uint16 else { return nil }
         self.windowSize = windowSizeUint16
         if debugPrint { print("・ windowSize: 0x" + String(format: "%02x", self.windowSize) + " - 0d" + String(format: "%u", self.windowSize)) }
         
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
-        let checksumUint16 = checksum.uint16
+        guard let checksumUint16 = checksum.uint16 else { return nil }
         self.checksum = checksumUint16
         if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum) + " - 0d" + String(format: "%u", self.checksum)) }
         
         guard let urgentPointer = bits.unpack(bytes: 2) else { return nil }
-        let urgentPointerUint16 = urgentPointer.uint16
+        guard let urgentPointerUint16 = urgentPointer.uint16 else { return nil }
         self.urgentPointer = urgentPointerUint16
         if debugPrint { print("・ urgentPointer: 0x" + String(format: "%02x", self.urgentPointer) + " - 0d" + String(format: "%u", self.urgentPointer)) }
         DatableConfig.endianess = .little
@@ -807,22 +808,22 @@ extension UDP: MaybeDatable
         
         DatableConfig.endianess = .big
         guard let sourcePort = bits.unpack(bytes: 2) else { return nil }
-        let sourcePortUint16 = sourcePort.uint16
+        guard let sourcePortUint16 = sourcePort.uint16 else { return nil }
         self.sourcePort = sourcePortUint16
         if debugPrint { print("・ UDPsourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - 0d" + String(format: "%u", self.sourcePort)) }
         
         guard let destinationPort = bits.unpack(bytes: 2) else { return nil }
-        let destinationPortUint16 = destinationPort.uint16
+        guard let destinationPortUint16 = destinationPort.uint16 else { return nil }
         self.destinationPort = destinationPortUint16
         if debugPrint { print("・ UDPdestinationPort: 0x" + String(format: "%02x", self.destinationPort) + " - 0d" + String(format: "%u", self.destinationPort)) }
         
         guard let length = bits.unpack(bytes: 2) else { return nil }
-        let lengthUint16 = length.uint16
+        guard let lengthUint16 = length.uint16 else { return nil }
         self.length = lengthUint16
         if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
         
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
-        let checksumUint16 = checksum.uint16
+        guard let checksumUint16 = checksum.uint16 else { return nil }
         self.checksum = checksumUint16
         if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum)) }
         DatableConfig.endianess = .little
