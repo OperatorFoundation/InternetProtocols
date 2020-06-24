@@ -13,6 +13,14 @@ import SwiftPCAP
 @testable import InternetProtocols
 
 
+extension String {
+    var isHex: Bool {
+        guard self.count > 0 else { return false }
+        let nums: Set<Character> = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "A", "B", "C", "D", "E", "F" ]
+        return Set(self).isSubset(of: nums)
+    }
+}
+
 func convertMACtoBytes (inputString: String) -> Data
 {
     let bytesString = inputString.components(separatedBy:":")
@@ -43,10 +51,15 @@ func convertIPtoBytes (inputString: String) -> Data
     return ipData
 }
 
-func convertHexStringToBytes (inputString: String) -> Data
+func convertHexStringToBytes (inputString: String) -> Data?
 {
+    if inputString == ""
+    {
+        return nil
+    }
+        
     var bytes = Data()
-    if inputString.count % 2 == 0
+    if inputString.count % 2 == 0 && inputString.isHex
     {
         var i: Int = 0
         while (i < inputString.count)
@@ -85,53 +98,25 @@ struct tsharkTextFilePacket
     var ip_checksum: UInt16?
     var ip_src: Data
     var ip_dst: Data
-    
-    /*
-     public struct TCP
-     {
-         public let sourcePort: UInt16 //2 bytes
-         public let destinationPort: UInt16 //2 bytes
-         public let sequenceNumber: Data //4 bytes
-         public let acknowledgementNumber: Data //4 bytes
-         public let offset: Bits //4 bits
-         public let reserved: Bits //3 bits
-         public let ns: Bool //1 bit
-         public let cwr: Bool //1 bit
-         public let ece: Bool //1 bit
-         public let urg: Bool //1 bit
-         public let ack: Bool //1 bit
-         public let psh: Bool //1 bit
-         public let rst: Bool //1 bit
-         public let syn: Bool //1 bit
-         public let fin: Bool //1 bit
-         public let windowSize: UInt16 //2 bytes
-         public let checksum: UInt16 //2 bytes
-         public let urgentPointer: UInt16 //2 bytes
-         public let options: Data?
-         public let payload: Data?
-     }
-     */
-    
     var tcp_srcport: UInt16?
     var tcp_dstport: UInt16?
+    var tcp_hdr_len: UInt8? //String
+    var tcp_flags_res: UInt8? //String
+    var tcp_flags_ns: Bool
+    var tcp_flags_cwr: Bool
+    var tcp_flags_ecn: Bool
+    var tcp_flags_urg: Bool
+    var tcp_flags_ack: Bool
+    var tcp_flags_push: Bool
+    var tcp_flags_reset: Bool
+    var tcp_flags_syn: Bool
+    var tcp_flags_fin: Bool
     
-    var tcp_hdr_len: String //String
-    var tcp_flags_res: String //String
-    
-    var tcp_flags_ns: String //Bool
-    var tcp_flags_cwr: String //Bool
-    var tcp_flags_ecn: String //Bool
-    var tcp_flags_urg: String //Bool
-    var tcp_flags_ack: String //Bool
-    var tcp_flags_push: String //Bool
-    var tcp_flags_reset: String //Bool
-    var tcp_flags_syn: String //Bool
-    var tcp_flags_fin: String //Bool
-    var tcp_window_size_value: String //UInt16
-    var tcp_checksum: String //UInt16
-    var tcp_urgent_pointer: String //UInt16
-    var tcp_options: String //Data
-    var tcp_payload: String //Data
+    var tcp_window_size_value: UInt16?
+    var tcp_checksum: UInt16?
+    var tcp_urgent_pointer: UInt16?
+    var tcp_options: Data?
+    var tcp_payload: Data?
     
     
     
@@ -144,7 +129,7 @@ struct tsharkTextFilePacket
     init(lineToParse: String)
     {
         let values = lineToParse.components(separatedBy:"\t")
-        if values.count == 43
+        if values.count == 41
         {
             self.frame_number = Int(string: values[0])
             self.eth_dst = convertMACtoBytes(inputString: values[1])
@@ -230,10 +215,8 @@ struct tsharkTextFilePacket
             }
             else { self.ip_checksum = nil }
             
-            
             self.ip_src = convertIPtoBytes (inputString: values[17].components(separatedBy: ",")[0])
             self.ip_dst = convertIPtoBytes (inputString: values[18].components(separatedBy: ",")[0])
-            
             
             if values[19] != ""
             {
@@ -247,22 +230,95 @@ struct tsharkTextFilePacket
             }
             else { self.tcp_dstport = nil }
             
-            self.tcp_hdr_len = values[21]
-            self.tcp_flags_res = values[22]
-            self.tcp_flags_ns = values[23]
-            self.tcp_flags_cwr = values[24]
-            self.tcp_flags_ecn = values[25]
-            self.tcp_flags_urg = values[26]
-            self.tcp_flags_ack = values[27]
-            self.tcp_flags_push = values[28]
-            self.tcp_flags_reset = values[29]
-            self.tcp_flags_syn = values[30]
-            self.tcp_flags_fin = values[31]
-            self.tcp_window_size_value = values[32]
-            self.tcp_checksum = values[33]
-            self.tcp_urgent_pointer = values[34]
-            self.tcp_options = values[35]
-            self.tcp_payload = values[36]
+            
+            if values[21] != ""
+            {
+                self.tcp_hdr_len = UInt8(string: values[21].components(separatedBy: ",")[0]) / 4
+            }
+            else { self.tcp_hdr_len = nil }
+            
+            if values[22] != ""
+            {
+                self.tcp_flags_res = UInt8(string: values[22].components(separatedBy: ",")[0])
+            }
+            else { self.tcp_flags_res = nil }
+            
+            if values[23].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_ns = false
+            }
+            else { self.tcp_flags_ns = true }
+            
+            if values[24].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_cwr = false
+            }
+            else { self.tcp_flags_cwr = true }
+            
+            if values[25].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_ecn = false
+            }
+            else { self.tcp_flags_ecn = true }
+            
+            if values[26].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_urg = false
+            }
+            else { self.tcp_flags_urg = true }
+            
+            if values[27].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_ack = false
+            }
+            else { self.tcp_flags_ack = true }
+            
+            if values[28].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_push = false
+            }
+            else { self.tcp_flags_push = true }
+            
+            if values[29].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_reset = false
+            }
+            else { self.tcp_flags_reset = true }
+            
+            if values[30].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_syn = false
+            }
+            else { self.tcp_flags_syn = true }
+            
+            if values[31].components(separatedBy: ",")[0] == "0"
+            {
+                self.tcp_flags_fin = false
+            }
+            else { self.tcp_flags_fin = true }
+            
+            if values[32] != ""
+            {
+                self.tcp_window_size_value = UInt16(string: values[32].components(separatedBy: ",")[0])
+            }
+            else { self.tcp_window_size_value = nil }
+
+            if values[33] != ""
+            {
+                self.tcp_checksum = UInt16(values[33].components(separatedBy: ",")[0].replacingOccurrences(of: "0x", with: ""), radix:16)!
+            }
+            else { self.tcp_checksum = nil }
+            
+            if values[34] != ""
+            {
+                self.tcp_urgent_pointer = UInt16(string: values[34].components(separatedBy: ",")[0])
+            }
+            else { self.tcp_urgent_pointer = nil }
+            
+
+            
+            self.tcp_options = convertHexStringToBytes(inputString: values[35])
+            self.tcp_payload = convertHexStringToBytes(inputString: values[36])
             
             
             self.udp_srcport = values[37]
@@ -296,22 +352,22 @@ struct tsharkTextFilePacket
             self.tcp_srcport = 0xFFFF
             self.tcp_dstport = 0xFFFF
             
-            self.tcp_hdr_len = ""
-            self.tcp_flags_res = ""
-            self.tcp_flags_ns = ""
-            self.tcp_flags_cwr = ""
-            self.tcp_flags_ecn = ""
-            self.tcp_flags_urg = ""
-            self.tcp_flags_ack = ""
-            self.tcp_flags_push = ""
-            self.tcp_flags_reset = ""
-            self.tcp_flags_syn = ""
-            self.tcp_flags_fin = ""
-            self.tcp_window_size_value = ""
-            self.tcp_checksum = ""
-            self.tcp_urgent_pointer = ""
-            self.tcp_options = ""
-            self.tcp_payload = ""
+            self.tcp_hdr_len = 0xFF
+            self.tcp_flags_res = 0xFF
+            self.tcp_flags_ns = true
+            self.tcp_flags_cwr = true
+            self.tcp_flags_ecn = true
+            self.tcp_flags_urg = true
+            self.tcp_flags_ack = true
+            self.tcp_flags_push = true
+            self.tcp_flags_reset = true
+            self.tcp_flags_syn = true
+            self.tcp_flags_fin = true
+            self.tcp_window_size_value = 0xFFFF
+            self.tcp_checksum = 0xFFFF
+            self.tcp_urgent_pointer = 0xFFFF
+            self.tcp_options = nil
+            self.tcp_payload = nil
             self.udp_srcport = ""
             self.udp_dstport = ""
             self.udp_length = ""
@@ -1122,7 +1178,17 @@ final class ParserTests: XCTestCase
                     
                     XCTAssertEqual(thisTsharkPacket.frame_number, packetCount)
                     
-                    let thisPacket = Packet(rawBytes: Data(bytes), debugPrints: false) //parse the packet
+                    var debugprint: Bool = false
+                    if packetCount == 47 || packetCount == 133
+                    {
+                        print("target")
+                        debugprint = true
+                    }
+  
+                    
+                    
+                    let thisPacket = Packet(rawBytes: Data(bytes), debugPrints: debugprint) //parse the packet
+                    
                     
                     if thisPacket.ethernet != nil
                     {
@@ -1158,24 +1224,35 @@ final class ParserTests: XCTestCase
                         
                         XCTAssertEqual(thisTsharkPacket.tcp_srcport, thisPacket.tcp!.sourcePort)
                         XCTAssertEqual(thisTsharkPacket.tcp_dstport, thisPacket.tcp!.destinationPort)
+                        XCTAssertEqual(thisTsharkPacket.tcp_hdr_len, thisPacket.tcp!.offset.uint8 )
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_res, thisPacket.tcp!.reserved.uint8)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ns, thisPacket.tcp!.ns)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_cwr, thisPacket.tcp!.cwr)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ecn, thisPacket.tcp!.ece)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_urg, thisPacket.tcp!.urg)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ack, thisPacket.tcp!.ack)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_push, thisPacket.tcp!.psh)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_reset, thisPacket.tcp!.rst)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_syn, thisPacket.tcp!.syn)
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_fin, thisPacket.tcp!.fin)
                         
+                        
+                        XCTAssertEqual(thisTsharkPacket.tcp_window_size_value, thisPacket.tcp!.windowSize)
+                        XCTAssertEqual(thisTsharkPacket.tcp_checksum, thisPacket.tcp!.checksum)
+                        XCTAssertEqual(thisTsharkPacket.tcp_urgent_pointer, thisPacket.tcp!.urgentPointer)
+                        XCTAssertEqual(thisTsharkPacket.tcp_options, thisPacket.tcp!.options)
+                        
+                        if debugprint
+                        {
+                            print("tshark: ")
+                            print(thisTsharkPacket.tcp_payload ?? "nil")
+                            print("proto: ")
+                            print(thisPacket.tcp!.payload ?? "nil")
+                        }
+                        XCTAssertEqual(thisTsharkPacket.tcp_payload, thisPacket.tcp!.payload)
                         
                         /*
-                          var tcp_srcport: UInt16?
-                          var tcp_dstport: UInt16?
-                          
-                          var tcp_hdr_len: String //String
-                          var tcp_flags_res: String //String
-                          
-                          var tcp_flags_ns: String //Bool
-                          var tcp_flags_cwr: String //Bool
-                          var tcp_flags_ecn: String //Bool
-                          var tcp_flags_urg: String //Bool
-                          var tcp_flags_ack: String //Bool
-                          var tcp_flags_push: String //Bool
-                          var tcp_flags_reset: String //Bool
-                          var tcp_flags_syn: String //Bool
-                          var tcp_flags_fin: String //Bool
+
                           var tcp_window_size_value: String //UInt16
                           var tcp_checksum: String //UInt16
                           var tcp_urgent_pointer: String //UInt16
@@ -1190,12 +1267,30 @@ final class ParserTests: XCTestCase
                     {
                         print("➢ checking UDP")//, terminator:"")
                     }
+                    
+                    if thisPacket.ethernet == nil && thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil
+                    {
+                        print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
+                        print("‼️ Packet not parsed, result has no Ethernet, IPv4, TCP or UDP")
+                        print("‼️ Parsing debug prints:")
+                        _ = Packet(rawBytes: Data(bytes), debugPrints: true)
+                    }
+                    else if thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil
+                    {
+                        print("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️")
+                        print("⚠️ Packet not fully parsed, result has no IPv4, TCP or UDP")
+                        print("⚠️ Parsing debug prints:")
+                        _ = Packet(rawBytes: Data(bytes), debugPrints: true)
+                    }
+                    
+
+                    
                 }
             }
         }
         print("✌️")
     }
     
-    
+
 
 }
