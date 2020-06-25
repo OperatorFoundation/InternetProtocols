@@ -1165,6 +1165,7 @@ final class ParserTests: XCTestCase
             while processingFile
             {
                 let bytes = packetSource.nextPacket()
+                let timestamp = packetSource.currentHeader.ts
                 
                 if bytes.count == 0
                 {
@@ -1189,7 +1190,7 @@ final class ParserTests: XCTestCase
   
                     
                     
-                    let thisPacket = Packet(rawBytes: Data(bytes), debugPrints: debugprint) //parse the packet
+                    let thisPacket = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: debugprint) //parse the packet
                     
                     
                     if thisPacket.ethernet != nil
@@ -1275,14 +1276,14 @@ final class ParserTests: XCTestCase
                         print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
                         print("‼️ Packet not parsed, result has no Ethernet, IPv4, TCP or UDP")
                         print("‼️ Parsing debug prints:")
-                        _ = Packet(rawBytes: Data(bytes), debugPrints: true)
+                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
                     }
                     else if thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil
                     {
                         print("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️")
                         print("⚠️ Packet not fully parsed, result has no IPv4, TCP or UDP")
                         print("⚠️ Parsing debug prints:")
-                        _ = Packet(rawBytes: Data(bytes), debugPrints: true)
+                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
                     }
                     
 

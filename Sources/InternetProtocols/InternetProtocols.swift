@@ -67,12 +67,25 @@ public struct Packet: Codable
     public var udp: UDP?
     public var debugPrints: Bool?
     
-    public init(rawBytes: Data, debugPrints: Bool = false)
+    public init(rawBytes: Data, timestamp: timeval,  debugPrints: Bool = false)
     {
         debugPrint = debugPrints
         
         self.rawBytes = rawBytes
-        self.timestamp = Int(Date().timeIntervalSince1970 * 1e3) //converting from seconds to milliseconds
+        
+        let seconds = UInt64(timestamp.tv_sec) //convert seconds to microsecs
+        let microSecs = UInt64(timestamp.tv_usec)
+        let totalMicroSecs = seconds * UInt64(1e6) + microSecs
+        let totalMilliSecs = totalMicroSecs / 1000
+        self.timestamp = Int(totalMilliSecs)
+        
+        if debugPrint
+        {
+            print("・ timestamp (in milliSecs): \(self.timestamp)")
+            print("・    seconds part: \(seconds)")
+            print("・    microsecs part: \(microSecs)")
+            print("・    total microsecs: \(totalMicroSecs)")
+        }
         
         if let ethernetPacket = Ethernet(data: rawBytes )
         {
