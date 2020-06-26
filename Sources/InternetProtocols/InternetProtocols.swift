@@ -60,7 +60,7 @@ public func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, 
 public struct Packet: Codable
 {
     public let rawBytes: Data
-    public let timestamp: Int //time in milliseconds since unix epoch
+    public let timestamp: Int //time in microseconds since unix epoch
     public var ethernet: Ethernet?
     public var ipv4: IPv4?
     public var tcp: TCP?
@@ -76,8 +76,8 @@ public struct Packet: Codable
         let seconds = UInt64(timestamp.tv_sec) //convert seconds to microsecs
         let microSecs = UInt64(timestamp.tv_usec)
         let totalMicroSecs = seconds * UInt64(1e6) + microSecs
-        let totalMilliSecs = totalMicroSecs / 1000
-        self.timestamp = Int(totalMilliSecs)
+        //let totalMilliSecs = totalMicroSecs / 1000
+        self.timestamp = Int(totalMicroSecs)
         
         if debugPrint
         {
