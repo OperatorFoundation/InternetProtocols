@@ -1400,6 +1400,45 @@ final class ParserTests: XCTestCase
         print("✌️")
     }
     
+    
+    func testChecksum(){
+        //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
+        //packet #4
+        //let packetBytes = Data(array: [
+        //    0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08, 0x00, 0x45, 0x00,
+        //    0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06, 0x2d, 0xc9, 0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4,
+        //    0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
+        //    0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
+        
+        let packetBytesToVerify = Data(array: [
+        0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
+        0x2d, 0xc9, // <- the checksum bytes in the ip header
+        0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
+        
+        let packetBytesToGenChecksum = Data(array: [
+        0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
+        0x00, 0x00, // <- set checksum bytes to zero to compute the checksum for the ip header
+        0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
 
+        //calculating the checksum on the entire ip header should give a checksum of zero.
+        guard let verificationResults = calculateChecksum(bytes: packetBytesToVerify) else
+        {
+            XCTFail()
+            return
+        }
+        print("verification results: \(verificationResults)")
+        printDataBytes(bytes: Data(uint16: verificationResults)!, hexDumpFormat: true, seperator: " ", decimal: false)
+        XCTAssertEqual(verificationResults, 0)
+
+        //setting the checksum bytes to 0x0000 before calculating should give the checksum of the ip header
+        guard let generationResults = calculateChecksum(bytes: packetBytesToGenChecksum) else
+        {
+            XCTFail()
+            return
+        }
+        print("checksum generation results: \(generationResults)")
+        printDataBytes(bytes: Data(uint16: generationResults)!, hexDumpFormat: true, seperator: " ", decimal: false)
+        XCTAssertEqual(generationResults, 0x2dc9)
+    }
 
 }

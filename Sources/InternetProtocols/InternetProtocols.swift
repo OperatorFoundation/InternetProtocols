@@ -57,6 +57,41 @@ public func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, 
     print("")
 }
 
+public func calculateChecksum(bytes: Data) -> UInt16?
+{
+    // ref https://en.wikipedia.org/wiki/IPv4_header_checksum
+    // ref https://tools.ietf.org/html/rfc791#page-14 //IP
+    // ref https://tools.ietf.org/html/rfc793#page-16 //TCP
+    // ref https://tools.ietf.org/html/rfc768 //UDP
+    // note when sending UDP packet, the checksum is optional and is indicated as not being calculated when 0x0000 is sent, so if sending wiht a checksum and the calculated checksum = 0x0000 then you must send 0xFFFF or things will think it was not calculated
+    
+    var sum: UInt32 = 0 //0xFFFF + 0xFFFF = 0x1FFFE which is more than a UInt16 can hold
+
+    var ourBytes = bytes
+    
+    if ourBytes.count % 2 != 0 //make sure we have an even number of bytes
+    {
+        ourBytes.append(0x00) //per RFCs append a 0x00 byte to the end to make it even, then calc checksum
+    }
+    
+    for i in 0..<(ourBytes.count/2) //2 bytes at a time
+    {
+        let twoBytes = ourBytes.subdata( in: (i*2)..<(i*2+2) )
+        
+        guard let value = twoBytes.uint32 else { return nil } //convert bytes to number value
+        
+        sum += value //add number value to sum
+        if sum > 0xFFFF //handle carry by subtracting 0xFFFF
+        {
+            sum -= 0xFFFF
+        }
+    }
+    let checksum = ~UInt16(sum) //one's compliment of sum returned as 2 bytes (UInt16)
+    
+    return checksum
+}
+
+
 public struct Packet: Codable
 {
     public let rawBytes: Data
@@ -146,7 +181,7 @@ public enum EtherType: UInt16, Codable
     case IPv6 = 0x86DD    //Internet Protocol Version 6 (IPv6)
     case singleTagVLAN = 0x8100    //VLAN-tagged frame (IEEE 802.1Q)
     case doubleTagVLAN = 0x88A8 //VLAN-tagged (IEEE 802.1Q) frame with double tagging
-
+    
     case WakeOnLan = 0x0842    //Wake-on-LAN[9]
     case AVTP = 0x22F0    //Audio Video Transport Protocol (AVTP)
     case IETF_TRILL = 0x22F3    //IETF TRILL Protocol
@@ -203,8 +238,8 @@ public extension EtherType
 {
     init?(data: UInt16)
     {
-//        DatableConfig.endianess = .big
-//        guard let x = data.uint16 else { return nil}
+        //        DatableConfig.endianess = .big
+        //        guard let x = data.uint16 else { return nil}
         self.init(rawValue: data)
     }
     
@@ -299,7 +334,7 @@ public enum IPprotocolNumber: UInt8, Codable
     case HIP = 0x8B //Host Identity Protocol - RFC 5201
     case Shim6 = 0x8C //Site Multihoming by IPv6 Intermediation - RFC 5533
     
-
+    
     case IGMP = 0x02    //Internet Group Management Protocol - RFC 1112
     case GGP = 0x03    //Gateway-to-Gateway Protocol - RFC 823
     case IPinIP = 0x04    //IP in IP (encapsulation) - RFC 2003
@@ -425,7 +460,7 @@ public enum IPprotocolNumber: UInt8, Codable
     case UDPLite = 0x88    //Lightweight User Datagram Protocol - RFC 3828
     case MPLS_in_IP = 0x89    //Multiprotocol Label Switching Encapsulated in IP - RFC 4023, RFC 5332
     case manet = 0x8A    //MANET Protocols - RFC 5498
-
+    
     case WESP = 0x8D    //Wrapped Encapsulating Security Payload - RFC 5840
     case ROHC = 0x8E    //Robust Header Compression - RFC 5856
     case Ethernet = 0x8F    //IPv6 Segment Routing (TEMPORARY - registered 2020-01-31, expires 2021-01-31) -
@@ -512,7 +547,7 @@ extension Ethernet: MaybeDatable
         {
             print("・ src: ", terminator: "")
             printDataBytes(bytes: self.MACSource, hexDumpFormat: false, seperator: ":", decimal: false)
-        
+            
         }
         
         // links for type or tag documentation
@@ -548,13 +583,13 @@ extension Ethernet: MaybeDatable
             self.size = nil
         }
         
-            let tempType = EtherType(data: typeOrTagUInt16)
-//        {
-//            if debugPrint { print("・ This EtherType is not known to parser") }
-//
-//            //return nil
-//        }
-//
+        let tempType = EtherType(data: typeOrTagUInt16)
+        //        {
+        //            if debugPrint { print("・ This EtherType is not known to parser") }
+        //
+        //            //return nil
+        //        }
+        //
         switch tempType
         {
         //fix, add cases for other ethertypes
@@ -601,7 +636,7 @@ extension Ethernet: MaybeDatable
             }
             else
             {
-               self.type = nil
+                self.type = nil
                 self.tag2 = nil
             }
             
