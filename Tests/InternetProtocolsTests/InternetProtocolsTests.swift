@@ -1391,9 +1391,6 @@ final class ParserTests: XCTestCase
                         _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
                         XCTFail()
                     }
-                    
-                    
-                    
                 }
             }
         }
@@ -1584,6 +1581,33 @@ final class ParserTests: XCTestCase
     
     func testUDPconstructor()
     {
+        //https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=b6300a.cap
+        //packet #2
+        
+        let packetUDPBytes = Data(array: [
+            0x00, 0xa1, 0x3e, 0x2c, 0x00, 0x42, 0x7d, 0x6d, 0x30, 0x38, 0x02, 0x01, 0x00, 0x04, 0x06, 0x70,
+            0x75, 0x62, 0x6c, 0x69, 0x63, 0xa2, 0x2b, 0x02, 0x01, 0x26, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00,
+            0x30, 0x20, 0x30, 0x1e, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x02, 0x00, 0x06, 0x12,
+            0x2b, 0x06, 0x01, 0x04, 0x01, 0x8f, 0x51, 0x01, 0x01, 0x01, 0x82, 0x29, 0x5d, 0x01, 0x1b, 0x02,
+            0x02, 0x01
+        ])
+        
+        let ourTime: timeval = timeval()
+        
+        let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
+        
+        guard let ourIP = ourPacket.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let ourUDP = ourPacket.udp else
+        {
+            XCTFail()
+            return
+        }
+        
         
     }
     

@@ -520,6 +520,55 @@ public struct UDP: Codable
     public let payload: Data?
 }
 
+
+extension UDP
+{
+    public init?(sourcePort: UInt16, destinationPort: UInt16, length: UInt16, checksum: UInt16?, payload: Data?, IPv4: IPv4)
+    {
+        DatableConfig.endianess = .big
+        
+        self.sourcePort = sourcePort
+        self.destinationPort = destinationPort
+        self.length = length
+        self.payload = payload
+        
+        if let checksumNonNil = checksum //if checksum is nil then calculate it otherwise use the checksum passed
+        {
+            self.checksum = checksumNonNil
+        }
+        else
+        {
+            var checksumData: Data = Data()
+            
+            let psuedoheader = IPv4.pseudoHeaderUDP
+            
+            checksumData.append(psuedoheader)
+            checksumData.append(self.sourcePort.data)
+            checksumData.append(self.destinationPort.data)
+            checksumData.append(self.length.data)
+            
+            if let payloadData = self.payload
+            {
+                checksumData.append(payloadData)
+            }
+            
+            if checksumData.count % 2 != 0
+            {
+                checksumData.append(0x00)
+            }
+            
+            if let checkresult = calculateChecksum(bytes: checksumData)
+            {
+                self.checksum = checkresult
+            }
+            else
+            {
+                return nil
+            }
+        }
+    }
+}
+
 extension TCP
 {
     public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: Data, acknowledgementNumber: Data,
@@ -544,11 +593,9 @@ extension TCP
         self.syn = syn
         self.fin = fin
         self.windowSize = windowSize
-        
         self.urgentPointer = urgentPointer
         self.options = options
         self.payload = payload
-        
         
         if let checksumNonNil = checksum //if checksum is nil then calculate it otherwise use the checksum passed
         {
@@ -590,7 +637,6 @@ extension TCP
                 checksumData.append(optionsData.data)
             }
             
-            
             if let payloadData = self.payload
             {
                 checksumData.append(payloadData)
@@ -599,7 +645,8 @@ extension TCP
             if let checkresult = calculateChecksum(bytes: checksumData)
             {
                 self.checksum = checkresult
-            } else
+            }
+            else
             {
                 return nil
             }
@@ -709,11 +756,11 @@ extension IPv4
     var pseudoHeaderTCP: Data
     {
         var results: Data = Data()
-        let zero: UInt8 = 0
+        let reservedZero: UInt8 = 0
         
         results.append(self.sourceAddress)
         results.append(self.destinationAddress)
-        results.append(zero.data)
+        results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
         
         let TCPLen = self.length - (self.IHL.uint16! * 4)
@@ -722,9 +769,20 @@ extension IPv4
         return results
     }
     
-    //var pseudoHeaderUDP: Data
-    
-    
+    var pseudoHeaderUDP: Data
+    {
+        var results: Data = Data()
+        let reservedZero: UInt8 = 0
+        results.append(self.sourceAddress)
+        results.append(self.destinationAddress)
+        results.append(reservedZero.data)
+        results.append(self.protocolNumber.rawValue)
+        
+        let UDPLen = self.length - (self.IHL.uint16! * 4)
+        results.append(UDPLen.data)
+        
+        return results
+    }
     
     
 }
