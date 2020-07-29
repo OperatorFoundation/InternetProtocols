@@ -40,7 +40,7 @@ func convertIPtoBytes (inputString: String) -> Data
 {
     let intsString = inputString.components(separatedBy:".")
     var ipData = Data()
-
+    
     for int in intsString
     {
         if let byteUInt8 = UInt8(int, radix:10)
@@ -57,7 +57,7 @@ func convertHexStringToBytes (inputString: String) -> Data?
     {
         return nil
     }
-        
+    
     var bytes = Data()
     if inputString.count % 2 == 0 && inputString.isHex
     {
@@ -154,8 +154,8 @@ struct tsharkTextFilePacket
                 else { self.eth_type = nil }
             }
             else { self.eth_type = nil }
-                
-                
+            
+            
             if values[4] != ""
             {
                 self.ip_version = UInt8(string: values[4].components(separatedBy: ",")[0])
@@ -225,7 +225,7 @@ struct tsharkTextFilePacket
             if values[15] != ""
             {
                 let number = UInt8(string: values[15].components(separatedBy: ",")[0])
-
+                
                 if let proto = IPprotocolNumber(data: number.data)
                 {
                     self.ip_proto = proto
@@ -238,7 +238,7 @@ struct tsharkTextFilePacket
                 
             }
             
-           
+            
             if values[16] != ""
             {
                 self.ip_checksum = UInt16( values[16].components(separatedBy: ",")[0].replacingOccurrences(of: "0x", with: ""), radix:16 )!
@@ -332,7 +332,7 @@ struct tsharkTextFilePacket
                 self.tcp_window_size_value = UInt16(string: values[32].components(separatedBy: ",")[0])
             }
             else { self.tcp_window_size_value = nil }
-
+            
             if values[33] != ""
             {
                 self.tcp_checksum = UInt16(values[33].components(separatedBy: ",")[0].replacingOccurrences(of: "0x", with: ""), radix:16)!
@@ -605,7 +605,7 @@ final class ParserTests: XCTestCase
         let correctIPv4ECN: UInt8 = 0x00 //(48)
         let correctIPv4length: UInt16 = 0x0030
         let correctIPv4identification: UInt16 = 0x0000
- 
+        
         //let correctIPv4flags: UInt8 = 0b010 //UInt8 3 bits
         let correctIPv4reservedBit: Bool = false
         let correctIPv4dontFragment: Bool = true
@@ -897,7 +897,7 @@ final class ParserTests: XCTestCase
         //packet #4
         //and https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=vlan.cap.gz
         //packet #6
-
+        
         let ethernetBytesMACsourceFail =  Data(array: [0x00, 0x0d, 0x88, 0x40, 0xdf])
         let ethernetBytesMACdestinationFail = Data(array: [0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x00, 0x05, 0x9a, 0x3c, 0x78])
         let ethernetBytesMACtypeFail1 = Data(array:[0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08])
@@ -1160,7 +1160,7 @@ final class ParserTests: XCTestCase
         /*
          This test function loads a pcap and a text file created by tshark with as many parsed fields as possible. The test then compares the results of InternetProtocols' parsing against Tshark's parsing.
          Any pcap can be used, just place a copy of the pcap in "TestResources" and rerun  processPCAPsWithTshark.sh to generate the tshark parsed text file.
-
+         
          Note, this function uses a bundle to access pcap files used for testing
          These are located in the directory "TestResources"
          file name requirements:
@@ -1168,14 +1168,14 @@ final class ParserTests: XCTestCase
          <name>.pcap.txt - tshark pcap parsing results. note these are not the complete packet dissection results but it has most fields and is easy to handle. JSON is a more complete tshark result, but the parsing seems much more involved
          
          In xcode, to get this to work:
-             swift package update
-             swift package generate-xcodeproj
-             open the xcode project
-                select InternetProtocolsTests under Targets
-                click +, to add a new build phase, select New Copy Bundle Resources Phase
-                expand Copy Bundle Resources
-                under the new phase, click +, to add items to the phase, select TestResources folder and click Add
-             now when the tests are run, they will have access to the files in the TestResources folder.
+         swift package update
+         swift package generate-xcodeproj
+         open the xcode project
+         select InternetProtocolsTests under Targets
+         click +, to add a new build phase, select New Copy Bundle Resources Phase
+         expand Copy Bundle Resources
+         under the new phase, click +, to add items to the phase, select TestResources folder and click Add
+         now when the tests are run, they will have access to the files in the TestResources folder.
          
          Notes on adding a bundle using SPM - not currently working for tests, but will in Swift 5.3, https://github.com/apple/swift-evolution/blob/master/proposals/0271-package-manager-resources.md
          
@@ -1242,7 +1242,7 @@ final class ParserTests: XCTestCase
             let textFileLines = contents.components(separatedBy:"\n")
             
             processingFile = true
-
+            
             print("👉 reading packets")
             while processingFile
             {
@@ -1279,11 +1279,11 @@ final class ParserTests: XCTestCase
                         print("➢ checking ethernet")//, terminator:"")
                         XCTAssertEqual(thisTsharkPacket.eth_src, thisPacket.ethernet!.MACSource)
                         XCTAssertEqual(thisTsharkPacket.eth_dst, thisPacket.ethernet!.MACDestination)
- 
+                        
                         if thisPacket.ethernet!.tag1 == nil && thisPacket.ethernet!.type != .sizeNotEtherType
                             //fix, when parsing vlan packets the type field is set to the inner ethernet type, and not the VLAN type - tshark views VLAN to be the ehternet type and not ipv4. so if it's a VLAN packet we skip the following test
                         {
-                        XCTAssertEqual(thisTsharkPacket.eth_type, thisPacket.ethernet!.type)
+                            XCTAssertEqual(thisTsharkPacket.eth_type, thisPacket.ethernet!.type)
                         }
                         else
                         {
@@ -1392,7 +1392,7 @@ final class ParserTests: XCTestCase
                         XCTFail()
                     }
                     
-
+                    
                     
                 }
             }
@@ -1411,15 +1411,15 @@ final class ParserTests: XCTestCase
         //    0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
         
         let packetBytesToVerify = Data(array: [
-        0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
-        0x2d, 0xc9, // <- the checksum bytes in the ip header
-        0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
+            0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
+            0x2d, 0xc9, // <- the checksum bytes in the ip header
+            0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
         
         let packetBytesToGenChecksum = Data(array: [
-        0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
-        0x00, 0x00, // <- set checksum bytes to zero to compute the checksum for the ip header
-        0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
-
+            0x45, 0x00, 0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06,
+            0x00, 0x00, // <- set checksum bytes to zero to compute the checksum for the ip header
+            0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4, 0x1f, 0xa7])
+        
         //calculating the checksum on the entire ip header should give a checksum of zero.
         guard let verificationResults = calculateChecksum(bytes: packetBytesToVerify) else
         {
@@ -1429,7 +1429,7 @@ final class ParserTests: XCTestCase
         print("verification results: \(verificationResults)")
         printDataBytes(bytes: Data(uint16: verificationResults)!, hexDumpFormat: true, seperator: " ", decimal: false)
         XCTAssertEqual(verificationResults, 0)
-
+        
         //setting the checksum bytes to 0x0000 before calculating should give the checksum of the ip header
         guard let generationResults = calculateChecksum(bytes: packetBytesToGenChecksum) else
         {
@@ -1440,5 +1440,152 @@ final class ParserTests: XCTestCase
         printDataBytes(bytes: Data(uint16: generationResults)!, hexDumpFormat: true, seperator: " ", decimal: false)
         XCTAssertEqual(generationResults, 0x2dc9)
     }
-
+    
+    func testIPv4constructor(){
+        //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
+        //packet #4
+        let packetBytes = Data(array: [
+            0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08, 0x00, 0x45, 0x00,
+            0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06, 0x2d, 0xc9, 0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4,
+            0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
+            0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
+        
+        let ourTime: timeval = timeval()
+        
+        let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
+        
+        guard let ourIP = ourPacket.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let constructedIPv4 = IPv4(
+            version: ourIP.version,
+            IHL: ourIP.IHL,
+            DSCP: ourIP.DSCP,
+            ECN: ourIP.ECN,
+            length: ourIP.length,
+            identification: ourIP.identification,
+            reservedBit: ourIP.reservedBit,
+            dontFragment: ourIP.dontFragment,
+            moreFragments: ourIP.moreFragments,
+            fragmentOffset: ourIP.fragmentOffset,
+            ttl: ourIP.ttl,
+            protocolNumber: ourIP.protocolNumber,
+            checksum: nil, //pass nil to test calculating the IPv4 checksum
+            sourceAddress: ourIP.sourceAddress,
+            destinationAddress: ourIP.destinationAddress,
+            options: ourIP.options,
+            payload: ourIP.payload,
+            ethernetPadding: ourIP.ethernetPadding
+            ) else
+        {
+            XCTFail()
+            return
+        }
+        
+        XCTAssertEqual(constructedIPv4.version.data, ourIP.version.data)
+        XCTAssertEqual(constructedIPv4.IHL.data, ourIP.IHL.data)
+        XCTAssertEqual(constructedIPv4.DSCP.data, ourIP.DSCP.data)
+        XCTAssertEqual(constructedIPv4.ECN.data, ourIP.ECN.data)
+        XCTAssertEqual(constructedIPv4.length, ourIP.length)
+        XCTAssertEqual(constructedIPv4.identification, ourIP.identification)
+        XCTAssertEqual(constructedIPv4.reservedBit, ourIP.reservedBit)
+        XCTAssertEqual(constructedIPv4.dontFragment, ourIP.dontFragment)
+        XCTAssertEqual(constructedIPv4.moreFragments, ourIP.moreFragments)
+        XCTAssertEqual(constructedIPv4.fragmentOffset.data, ourIP.fragmentOffset.data)
+        XCTAssertEqual(constructedIPv4.ttl, ourIP.ttl)
+        XCTAssertEqual(constructedIPv4.protocolNumber, ourIP.protocolNumber)
+        XCTAssertEqual(constructedIPv4.checksum, ourIP.checksum)
+        XCTAssertEqual(constructedIPv4.sourceAddress, ourIP.sourceAddress)
+        XCTAssertEqual(constructedIPv4.destinationAddress, ourIP.destinationAddress)
+        XCTAssertEqual(constructedIPv4.options, ourIP.options)
+        XCTAssertEqual(constructedIPv4.payload, ourIP.payload)
+        XCTAssertEqual(constructedIPv4.ethernetPadding, ourIP.ethernetPadding)
+    }
+    
+    func testTCPconstructor(){
+        //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
+        //packet #4
+        let packetBytes = Data(array: [
+            0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08, 0x00, 0x45, 0x00,
+            0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06, 0x2d, 0xc9, 0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4,
+            0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
+            0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
+        
+        let ourTime: timeval = timeval()
+        
+        let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
+        
+        guard let ourIP = ourPacket.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let ourTCP = ourPacket.tcp else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let constructedTCP = TCP(
+            sourcePort: ourTCP.sourcePort,
+            destinationPort: ourTCP.destinationPort,
+            sequenceNumber: ourTCP.sequenceNumber,
+            acknowledgementNumber: ourTCP.acknowledgementNumber,
+            offset: ourTCP.offset,
+            reserved: ourTCP.reserved,
+            ns: ourTCP.ns,
+            cwr: ourTCP.cwr,
+            ece: ourTCP.ece,
+            urg: ourTCP.urg,
+            ack: ourTCP.ack,
+            psh: ourTCP.psh,
+            rst: ourTCP.rst,
+            syn: ourTCP.syn,
+            fin: ourTCP.fin,
+            windowSize: ourTCP.windowSize,
+            checksum: nil, //pass nil to test calculating the TCP checksum
+            urgentPointer: ourTCP.urgentPointer,
+            options: ourTCP.options,
+            payload: ourTCP.payload,
+            IPv4: ourIP
+            ) else
+        {
+            XCTFail()
+            return
+        }
+        
+        XCTAssertEqual(constructedTCP.checksum, ourTCP.checksum)
+        XCTAssertEqual(constructedTCP.sourcePort, ourTCP.sourcePort)
+        XCTAssertEqual(constructedTCP.destinationPort, ourTCP.destinationPort)
+        XCTAssertEqual(constructedTCP.sequenceNumber, ourTCP.sequenceNumber)
+        XCTAssertEqual(constructedTCP.acknowledgementNumber, ourTCP.acknowledgementNumber)
+        XCTAssertEqual(constructedTCP.offset.data, ourTCP.offset.data)
+        XCTAssertEqual(constructedTCP.reserved.data, ourTCP.reserved.data)
+        XCTAssertEqual(constructedTCP.ns, ourTCP.ns)
+        XCTAssertEqual(constructedTCP.cwr, ourTCP.cwr)
+        XCTAssertEqual(constructedTCP.ece, ourTCP.ece)
+        XCTAssertEqual(constructedTCP.urg, ourTCP.urg)
+        XCTAssertEqual(constructedTCP.ack, ourTCP.ack)
+        XCTAssertEqual(constructedTCP.psh, ourTCP.psh)
+        XCTAssertEqual(constructedTCP.rst, ourTCP.rst)
+        XCTAssertEqual(constructedTCP.syn, ourTCP.syn)
+        XCTAssertEqual(constructedTCP.fin, ourTCP.fin)
+        XCTAssertEqual(constructedTCP.windowSize, ourTCP.windowSize)
+        XCTAssertEqual(constructedTCP.urgentPointer, ourTCP.urgentPointer)
+        XCTAssertEqual(constructedTCP.options, ourTCP.options)
+        XCTAssertEqual(constructedTCP.payload, ourTCP.payload)
+        
+    }
+    
+    
+    func testUDPconstructor()
+    {
+        
+    }
+    
+    
 }

@@ -66,7 +66,7 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     // note when sending UDP packet, the checksum is optional and is indicated as not being calculated when 0x0000 is sent, so if sending wiht a checksum and the calculated checksum = 0x0000 then you must send 0xFFFF or things will think it was not calculated
     
     var sum: UInt32 = 0 //0xFFFF + 0xFFFF = 0x1FFFE which is more than a UInt16 can hold
-
+    
     var ourBytes = bytes
     
     if ourBytes.count % 2 != 0 //make sure we have an even number of bytes
@@ -90,6 +90,8 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     
     return checksum
 }
+
+
 
 
 public struct Packet: Codable
@@ -517,6 +519,217 @@ public struct UDP: Codable
     public let checksum: UInt16
     public let payload: Data?
 }
+
+extension TCP
+{
+    public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: Data, acknowledgementNumber: Data,
+                 offset: Bits, reserved: Bits, ns: Bool, cwr: Bool, ece: Bool, urg: Bool, ack: Bool, psh: Bool,
+                 rst: Bool, syn: Bool, fin: Bool, windowSize: UInt16, checksum: UInt16?, urgentPointer: UInt16,
+                 options: Data?, payload: Data?, IPv4: IPv4)
+    {
+        DatableConfig.endianess = .big
+        self.sourcePort = sourcePort
+        self.destinationPort = destinationPort
+        self.sequenceNumber = sequenceNumber
+        self.acknowledgementNumber = acknowledgementNumber
+        self.offset = offset
+        self.reserved = reserved
+        self.ns = ns
+        self.cwr = cwr
+        self.ece = ece
+        self.urg = urg
+        self.ack = ack
+        self.psh = psh
+        self.rst = rst
+        self.syn = syn
+        self.fin = fin
+        self.windowSize = windowSize
+        
+        self.urgentPointer = urgentPointer
+        self.options = options
+        self.payload = payload
+        
+        
+        if let checksumNonNil = checksum //if checksum is nil then calculate it otherwise use the checksum passed
+        {
+            self.checksum = checksumNonNil
+        }
+        else
+        {
+            var checksumData: Data = Data()
+            
+            let psuedoheader = IPv4.pseudoHeaderTCP
+            
+            //pack all the tcp stuff and the psudo header, then calculate the checksum
+            //handle optionals
+            checksumData.append(psuedoheader)
+            checksumData.append(self.sourcePort.data)
+            checksumData.append(self.destinationPort.data)
+            checksumData.append(self.sequenceNumber)
+            checksumData.append(self.acknowledgementNumber)
+            var offsetReservedFlags: Bits = Bits()
+            let _ = offsetReservedFlags.pack(bits: self.offset)
+            let _ = offsetReservedFlags.pack(bits: self.reserved)
+            let _ = offsetReservedFlags.pack(bool: self.ns)
+            let _ = offsetReservedFlags.pack(bool: self.cwr)
+            let _ = offsetReservedFlags.pack(bool: self.ece)
+            let _ = offsetReservedFlags.pack(bool: self.urg)
+            let _ = offsetReservedFlags.pack(bool: self.ack)
+            let _ = offsetReservedFlags.pack(bool: self.psh)
+            let _ = offsetReservedFlags.pack(bool: self.rst)
+            let _ = offsetReservedFlags.pack(bool: self.syn)
+            let _ = offsetReservedFlags.pack(bool: self.fin)
+            
+            checksumData.append(offsetReservedFlags.data)
+            checksumData.append(self.windowSize.data)
+            
+            checksumData.append(self.urgentPointer.data)
+            
+            if let optionsData = self.options
+            {
+                checksumData.append(optionsData.data)
+            }
+            
+            
+            if let payloadData = self.payload
+            {
+                checksumData.append(payloadData)
+            }
+            
+            if let checkresult = calculateChecksum(bytes: checksumData)
+            {
+                self.checksum = checkresult
+            } else
+            {
+                return nil
+            }
+        }
+        
+        
+    }
+    
+    
+}
+
+extension TCP: CustomStringConvertible
+{
+    public var description: String {
+        //return values of interest as a human readable string
+        
+        return "TCP \(self.destinationPort)"
+    }
+    
+    
+}
+
+
+extension IPv4
+{
+    public init?(version: Bits, IHL: Bits, DSCP: Bits, ECN: Bits, length: UInt16, identification: UInt16, reservedBit: Bool, dontFragment: Bool, moreFragments: Bool, fragmentOffset: Bits, ttl: UInt8, protocolNumber: IPprotocolNumber, checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?)
+    {
+        DatableConfig.endianess = .big
+        self.version = version
+        self.IHL = IHL
+        self.DSCP = DSCP
+        self.ECN = ECN
+        self.length = length
+        self.identification = identification
+        self.reservedBit = reservedBit
+        self.dontFragment = dontFragment
+        self.moreFragments = moreFragments
+        self.fragmentOffset = fragmentOffset
+        self.ttl = ttl
+        self.protocolNumber = protocolNumber
+        
+        self.sourceAddress = sourceAddress
+        self.destinationAddress = destinationAddress
+        self.options = options
+        self.payload = payload
+        self.ethernetPadding = ethernetPadding
+        
+        if let checksumNotNil = checksum
+        {
+            self.checksum = checksumNotNil
+        }
+        else
+        {
+            var checksumData: Data = Data()
+            
+            var verIHL: Bits = Bits()
+            let _ = verIHL.pack(bits: self.version)
+            let _ = verIHL.pack(bits: self.IHL)
+            checksumData.append(verIHL.data)
+            
+            var DSCPECN: Bits = Bits()
+            let _ = DSCPECN.pack(bits: self.DSCP)
+            let _ = DSCPECN.pack(bits: self.ECN)
+            checksumData.append(DSCPECN.data)
+            
+            checksumData.append(self.length.data)
+            checksumData.append(self.identification.data)
+            
+            var flagsFrags: Bits = Bits()
+            let _ = flagsFrags.pack(bool: self.reservedBit)
+            let _ = flagsFrags.pack(bool: self.dontFragment)
+            let _ = flagsFrags.pack(bool: self.moreFragments)
+            let _ = flagsFrags.pack(bits: self.fragmentOffset)
+            checksumData.append(flagsFrags.data)
+            
+            checksumData.append(self.ttl.data)
+            checksumData.append(self.protocolNumber.rawValue)
+            checksumData.append(self.sourceAddress)
+            checksumData.append(self.destinationAddress)
+            
+            if let optionsData = self.options
+            {
+                checksumData.append(optionsData.data)
+            }
+            
+            if let paddingData = self.ethernetPadding
+            {
+                checksumData.append(paddingData.data)
+            }
+            
+            if let checkresult = calculateChecksum(bytes: checksumData)
+            {
+                self.checksum = checkresult
+            } else
+            {
+                return nil
+            }
+            
+        }
+        
+        
+        
+        
+    }
+    
+    
+    var pseudoHeaderTCP: Data
+    {
+        var results: Data = Data()
+        let zero: UInt8 = 0
+        
+        results.append(self.sourceAddress)
+        results.append(self.destinationAddress)
+        results.append(zero.data)
+        results.append(self.protocolNumber.rawValue)
+        
+        let TCPLen = self.length - (self.IHL.uint16! * 4)
+        results.append(TCPLen.data)
+        
+        return results
+    }
+    
+    //var pseudoHeaderUDP: Data
+    
+    
+    
+    
+}
+
+
 
 extension Ethernet: MaybeDatable
 {
