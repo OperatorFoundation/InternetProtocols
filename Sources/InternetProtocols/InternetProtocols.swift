@@ -423,6 +423,21 @@ extension Ethernet: MaybeDatable
     }
 }
 
+//extension Ethernet
+//{
+//    public init?()
+//    {
+//        //constructor code
+//    }
+//}
+//
+//extension Ethernet: CustomStringConvertible
+//{
+//    public var description: String {
+//        //return string code
+//    }
+//}
+
 public struct IPv4: Codable
 {
     //http://www.networksorcery.com/enp/protocol/ip.htm
@@ -780,6 +795,13 @@ extension IPv4
     
 }
 
+//extension IPv4: CustomStringConvertible
+//{
+//    public var description: String {
+//        //return string code
+//    }
+//}
+
 public struct IPv6: Codable
 {
     public let version: Bits //UInt8 //4 bits
@@ -794,6 +816,29 @@ public struct IPv6: Codable
     //options?
     public let payload: Data
 }
+
+//extension IPv6: MaybeDatable
+//{
+//    public init?(data: Data)
+//    {
+//        //parsing code
+//    }
+//}
+//
+//extension IPv6
+//{
+//    public init?()
+//    {
+//          //constructor code
+//    }
+//}
+//
+//extension IPv6: CustomStringConvertible
+//{
+//    public var description: String {
+//        //return string code
+//    }
+//}
 
 public struct TCP: Codable
 {
@@ -1277,6 +1322,13 @@ extension UDP
         }
     }
 }
+
+//extension UDP: CustomStringConvertible
+//{
+//    public var description: String {
+//        //return string code
+//    }
+//}
 
 public enum EtherType: UInt16, Codable
 {
