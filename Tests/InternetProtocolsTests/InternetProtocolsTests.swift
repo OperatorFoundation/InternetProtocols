@@ -1196,12 +1196,27 @@ final class ParserTests: XCTestCase
         }
         print("👉 PCAP file count: \(pcapFileList.count)")
         
+        if pcapFileList.count == 0
+        {
+            //PCAPs not in bundle.
+            XCTFail()
+            return
+        }
+        
         guard let pcapTextFileList = bundleDoingTest.urls(forResourcesWithExtension: "txt", subdirectory: "TestResources") else
         {
             XCTFail()
             return
         }
         print("👉 Text file count: \(pcapFileList.count)\n")
+        
+        if pcapFileList.count != pcapFileList.count
+        {
+            //PCAP and text file count mismatch, there should be 1 txt per PCAP
+            XCTFail()
+            return
+        }
+        
         
         var processingFile: Bool = true
         var packetCount: Int
@@ -1527,6 +1542,9 @@ final class ParserTests: XCTestCase
             return
         }
         
+        print("ourTCP:")
+        print(ourTCP.description)
+        
         guard let constructedTCP = TCP(
             sourcePort: ourTCP.sourcePort,
             destinationPort: ourTCP.destinationPort,
@@ -1555,6 +1573,10 @@ final class ParserTests: XCTestCase
             return
         }
         
+        print("constructedTCP:")
+        print(constructedTCP.description)
+        
+        
         XCTAssertEqual(constructedTCP.checksum, ourTCP.checksum)
         XCTAssertEqual(constructedTCP.sourcePort, ourTCP.sourcePort)
         XCTAssertEqual(constructedTCP.destinationPort, ourTCP.destinationPort)
@@ -1575,7 +1597,6 @@ final class ParserTests: XCTestCase
         XCTAssertEqual(constructedTCP.urgentPointer, ourTCP.urgentPointer)
         XCTAssertEqual(constructedTCP.options, ourTCP.options)
         XCTAssertEqual(constructedTCP.payload, ourTCP.payload)
-        
     }
     
     
@@ -1584,12 +1605,14 @@ final class ParserTests: XCTestCase
         //https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=b6300a.cap
         //packet #2
         
-        let packetUDPBytes = Data(array: [
-            0x00, 0xa1, 0x3e, 0x2c, 0x00, 0x42, 0x7d, 0x6d, 0x30, 0x38, 0x02, 0x01, 0x00, 0x04, 0x06, 0x70,
-            0x75, 0x62, 0x6c, 0x69, 0x63, 0xa2, 0x2b, 0x02, 0x01, 0x26, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00,
-            0x30, 0x20, 0x30, 0x1e, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x02, 0x00, 0x06, 0x12,
-            0x2b, 0x06, 0x01, 0x04, 0x01, 0x8f, 0x51, 0x01, 0x01, 0x01, 0x82, 0x29, 0x5d, 0x01, 0x1b, 0x02,
-            0x02, 0x01
+        let packetBytes = Data(array: [
+            0x00, 0x12, 0x3f, 0x4a, 0x33, 0xd2, 0x08, 0x00, 0x37, 0x15, 0xe6, 0xbc, 0x08, 0x00, 0x45, 0x00,
+            0x00, 0x56, 0x1a, 0x1b, 0x00, 0x00, 0x40, 0x11, 0xe1, 0xbe, 0xac, 0x1f, 0x13, 0x49, 0xac, 0x1f,
+            0x13, 0x36, 0x00, 0xa1, 0x3e, 0x2c, 0x00, 0x42, 0x7d, 0x6d, 0x30, 0x38, 0x02, 0x01, 0x00, 0x04,
+            0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0xa2, 0x2b, 0x02, 0x01, 0x26, 0x02, 0x01, 0x00, 0x02,
+            0x01, 0x00, 0x30, 0x20, 0x30, 0x1e, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x02, 0x00,
+            0x06, 0x12, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x8f, 0x51, 0x01, 0x01, 0x01, 0x82, 0x29, 0x5d, 0x01,
+            0x1b, 0x02, 0x02, 0x01
         ])
         
         let ourTime: timeval = timeval()
@@ -1608,7 +1631,24 @@ final class ParserTests: XCTestCase
             return
         }
         
+        guard let constructedUDP = UDP(
+            sourcePort: ourUDP.sourcePort,
+            destinationPort: ourUDP.destinationPort,
+            length: ourUDP.length,
+            checksum: nil, //pass nil to test calculating the UDP checksum
+            payload: ourUDP.payload,
+            IPv4: ourIP
+            ) else
+        {
+            XCTFail()
+            return
+        }
         
+        XCTAssertEqual(constructedUDP.sourcePort, ourUDP.sourcePort)
+        XCTAssertEqual(constructedUDP.destinationPort, ourUDP.destinationPort)
+        XCTAssertEqual(constructedUDP.length, ourUDP.length)
+        XCTAssertEqual(constructedUDP.checksum, ourUDP.checksum)
+        XCTAssertEqual(constructedUDP.payload, ourUDP.payload)
     }
     
     
