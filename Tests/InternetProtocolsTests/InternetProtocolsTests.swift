@@ -1413,7 +1413,8 @@ final class ParserTests: XCTestCase
     }
     
     
-    func testChecksum(){
+    func testChecksum()
+    {
         //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
         //packet #4
         //let packetBytes = Data(array: [
@@ -1453,7 +1454,56 @@ final class ParserTests: XCTestCase
         XCTAssertEqual(generationResults, 0x2dc9)
     }
     
-    func testIPv4constructor(){
+    func testEthernetConstructor()
+    {
+        //packet #4
+        let packetBytes = Data(array: [
+            0x00, 0x05, 0x9a, 0x3c, 0x78, 0x00, 0x00, 0x0d, 0x88, 0x40, 0xdf, 0x1d, 0x08, 0x00, 0x45, 0x00,
+            0x00, 0x30, 0x00, 0x00, 0x40, 0x00, 0x34, 0x06, 0x2d, 0xc9, 0x80, 0x77, 0xf5, 0x0c, 0x83, 0xd4,
+            0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
+            0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
+        
+        let ourTime: timeval = timeval()
+        
+        let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
+        
+        guard let ourEthernet = ourPacket.ethernet else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let constructedEthernet = Ethernet(
+            MACDestination: ourEthernet.MACDestination,
+            MACSource: ourEthernet.MACSource,
+            type: ourEthernet.type,
+            tag1: ourEthernet.tag1,
+            tag2: ourEthernet.tag2,
+            payload: ourEthernet.payload,
+            ethernetSize: ourEthernet.size
+            ) else
+        {
+            XCTFail()
+            return
+        }
+        
+        print("constructedEthernet:")
+        print(constructedEthernet.description)
+        
+        XCTAssertEqual(constructedEthernet.MACDestination, ourEthernet.MACDestination)
+        XCTAssertEqual(constructedEthernet.MACSource, ourEthernet.MACSource)
+        XCTAssertEqual(constructedEthernet.type, ourEthernet.type)
+        XCTAssertEqual(constructedEthernet.tag1, ourEthernet.tag1)
+        XCTAssertEqual(constructedEthernet.tag2, ourEthernet.tag2)
+        XCTAssertEqual(constructedEthernet.size, ourEthernet.size)
+        XCTAssertEqual(constructedEthernet.payload, ourEthernet.payload)
+        
+        
+    }
+    
+    
+    func testIPv4constructor()
+    {
         //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
         //packet #4
         let packetBytes = Data(array: [
@@ -1497,6 +1547,9 @@ final class ParserTests: XCTestCase
             return
         }
         
+        print("constructedIPv4:")
+        print(constructedIPv4.description)
+        
         XCTAssertEqual(constructedIPv4.version.data, ourIP.version.data)
         XCTAssertEqual(constructedIPv4.IHL.data, ourIP.IHL.data)
         XCTAssertEqual(constructedIPv4.DSCP.data, ourIP.DSCP.data)
@@ -1517,7 +1570,8 @@ final class ParserTests: XCTestCase
         XCTAssertEqual(constructedIPv4.ethernetPadding, ourIP.ethernetPadding)
     }
     
-    func testTCPconstructor(){
+    func testTCPconstructor()
+    {
         //sample source: https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=tcp-ethereal-file1.trace
         //packet #4
         let packetBytes = Data(array: [
@@ -1643,6 +1697,9 @@ final class ParserTests: XCTestCase
             XCTFail()
             return
         }
+        
+        print("constructedUDP:")
+        print(constructedUDP.description)
         
         XCTAssertEqual(constructedUDP.sourcePort, ourUDP.sourcePort)
         XCTAssertEqual(constructedUDP.destinationPort, ourUDP.destinationPort)

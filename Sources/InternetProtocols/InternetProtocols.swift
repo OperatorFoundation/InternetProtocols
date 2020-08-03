@@ -423,20 +423,71 @@ extension Ethernet: MaybeDatable
     }
 }
 
-//extension Ethernet
-//{
-//    public init?()
-//    {
-//        //constructor code
-//    }
-//}
-//
-//extension Ethernet: CustomStringConvertible
-//{
-//    public var description: String {
-//        //return string code
-//    }
-//}
+extension Ethernet
+{
+    public init?(MACDestination: Data, MACSource: Data, type: EtherType?, tag1: Data?, tag2: Data?, payload: Data, ethernetSize: UInt16? )
+    {
+        //FIX, add parameter validation code
+        self.MACDestination = MACDestination
+        self.MACSource = MACSource
+        self.type = type
+        self.tag1 = tag1
+        self.tag2 = tag2
+        self.payload = payload
+        self.size = ethernetSize
+    }
+
+}
+
+extension Ethernet: CustomStringConvertible
+{
+    public var description: String {
+        //return Ethernet values of interest as a human readable string
+        var returnString: String = ""
+        
+        returnString += "MAC Destination: "
+        returnString += printDataBytes(bytes: MACDestination.data, hexDumpFormat: false, seperator: ":", decimal: false, enablePrinting: false)
+        returnString += "\n"
+        
+        returnString += "MAC Source: "
+        returnString += printDataBytes(bytes: MACSource.data, hexDumpFormat: false, seperator: ":", decimal: false, enablePrinting: false)
+        returnString += "\n"
+        
+        if let type = self.type
+        {
+            returnString += "Ether Type: 0x" + String(format: "%04x", type.rawValue) + " - \(type)\n"
+        }
+        else
+        {
+            returnString += "Ether Type: nil\n"
+        }
+        
+        if let tag1 = self.tag1
+        {
+            returnString += "Tag 1: 0x"
+            returnString += printDataBytes(bytes: tag1, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false)
+            returnString += "\n"
+        }
+        
+        if let tag2 = self.tag2
+        {
+            returnString += "Tag 2: 0x"
+            returnString += printDataBytes(bytes: tag2, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false)
+            returnString += "\n"
+        }
+        
+        if let size = self.size
+        {
+            returnString += "Size: 0x"
+            returnString += String(format: "%04x", size) + " - 0d" + String(size) + "\n"
+        }
+    
+        returnString += "Payload: \n"
+        returnString += printDataBytes(bytes: self.payload.data, hexDumpFormat: true, seperator: " ", decimal: false, enablePrinting: false) + "\n"
+        
+        return returnString
+    }
+}
 
 public struct IPv4: Codable
 {
@@ -682,6 +733,7 @@ extension IPv4
 {
     public init?(version: Bits, IHL: Bits, DSCP: Bits, ECN: Bits, length: UInt16, identification: UInt16, reservedBit: Bool, dontFragment: Bool, moreFragments: Bool, fragmentOffset: Bits, ttl: UInt8, protocolNumber: IPprotocolNumber, checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?)
     {
+        //FIX, add parameter validation code
         DatableConfig.endianess = .big
         self.version = version
         self.IHL = IHL
@@ -795,12 +847,75 @@ extension IPv4
     
 }
 
-//extension IPv4: CustomStringConvertible
-//{
-//    public var description: String {
-//        //return string code
-//    }
-//}
+extension IPv4: CustomStringConvertible
+{
+    public var description: String {
+        //return IPv4 values of interest as a human readable string
+        var returnString: String = ""
+        
+        guard let versionUint8 = version.uint8 else { return "Error converting version" }
+        returnString += "Version: 0x" + String(format: "%02x", versionUint8) + " - 0b" + String(versionUint8, radix: 2) + "\n"
+        
+        guard let IHLUint8 = IHL.uint8 else { return "Error converting IHL" }
+        returnString += "IHL: 0x" + String(format: "%02x", IHLUint8) + " - 0b" + String(IHLUint8, radix: 2) + "(" + String(IHLUint8 * 4) + " bytes)\n"
+        
+        guard let DSCPUint8 = DSCP.uint8 else { return "Error converting DSCP" }
+        returnString += "DSCP: 0x" + String(format: "%02x", DSCPUint8) + " - 0b" + String(DSCPUint8, radix: 2) + "\n"
+        
+        guard let ECNUint8 = ECN.uint8 else { return "Error converting ECN" }
+        returnString += "ECN: 0x" + String(format: "%02x", ECNUint8) + " - 0b" + String(ECNUint8, radix: 2) + "\n"
+        
+        returnString += "Length: 0x" + String(format: "%04x", self.length) + " - 0d" + self.length.string + "\n"
+        returnString += "Identification: 0x" + String(format: "%04x", self.identification) + " - 0d" + self.identification.string + "\n"
+        
+        returnString += "Reserved: " + String(self.reservedBit) + "\n"
+        returnString += "Don't Fragment: " + String(self.dontFragment) + "\n"
+        returnString += "More Fragments: " + String(self.moreFragments) + "\n"
+        
+        guard let fragmentOffsetUint16 = fragmentOffset.uint16 else { return "Error converting Fragment Offset" }
+        returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffsetUint16) + " - 0d" + String(fragmentOffsetUint16) + "\n"
+        
+        returnString += "TTL: 0x" + String(format: "%02x", self.ttl) + " - 0d" + self.ttl.string + "\n"
+        
+        returnString += "Protocol Number: 0x" + String(format: "%02x", self.protocolNumber.rawValue) + " - \(self.protocolNumber)\n"
+        
+        returnString += "Checksum: 0x" + String(format: "%04x", self.checksum) + " - 0d" + self.checksum.string + "\n"
+        
+        returnString += "Source Address: "
+        returnString += printDataBytes(bytes: sourceAddress.data, hexDumpFormat: false, seperator: ".", decimal: true, enablePrinting: false)
+        returnString += " ("
+        returnString += printDataBytes(bytes: sourceAddress.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false)
+        returnString +=  ")\n"
+        
+        returnString += "Destination Address: "
+        returnString += printDataBytes(bytes: destinationAddress.data, hexDumpFormat: false, seperator: ".", decimal: true, enablePrinting: false)
+        returnString += " ("
+        returnString += printDataBytes(bytes: destinationAddress.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false)
+        returnString +=  ")\n"
+        
+        if let options = self.options
+        {
+            returnString += "Options: "
+            returnString += printDataBytes(bytes: options.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false) + "\n"
+        }
+        else
+        {
+            returnString += "Options: nil\n"
+        }
+        
+        if let payload = self.payload
+        {
+            returnString += "Payload: \n"
+            returnString += printDataBytes(bytes: payload.data, hexDumpFormat: true, seperator: " ", decimal: false, enablePrinting: false) + "\n"
+        }
+        else
+        {
+            returnString += "Payload: nil\n"
+        }
+        
+        return returnString
+    }
+}
 
 public struct IPv6: Codable
 {
@@ -1055,6 +1170,7 @@ extension TCP
                  rst: Bool, syn: Bool, fin: Bool, windowSize: UInt16, checksum: UInt16?, urgentPointer: UInt16,
                  options: Data?, payload: Data?, IPv4: IPv4)
     {
+        //FIX, add parameter validation code
         DatableConfig.endianess = .big
         self.sourcePort = sourcePort
         self.destinationPort = destinationPort
@@ -1279,6 +1395,7 @@ extension UDP
 {
     public init?(sourcePort: UInt16, destinationPort: UInt16, length: UInt16, checksum: UInt16?, payload: Data?, IPv4: IPv4)
     {
+        //FIX, add parameter validation code
         DatableConfig.endianess = .big
         
         self.sourcePort = sourcePort
@@ -1323,12 +1440,30 @@ extension UDP
     }
 }
 
-//extension UDP: CustomStringConvertible
-//{
-//    public var description: String {
-//        //return string code
-//    }
-//}
+extension UDP: CustomStringConvertible
+{
+    public var description: String {
+        //return UDP values of interest as a human readable string
+        
+        var returnString: String = ""
+        returnString += "Source Port: " + self.sourcePort.string + "\n"
+        returnString += "Destination Port: " + self.destinationPort.string + "\n"
+        returnString += "Length: 0x" + String(format: "%04x", self.length) + " - 0d" + self.length.string + "\n"
+        returnString += "Checksum: 0x" + String(format: "%04x", self.checksum) + " - 0d" + self.checksum.string + "\n"
+        
+        if let payload = self.payload
+        {
+            returnString += "Payload: "
+            returnString += printDataBytes(bytes: payload.data, hexDumpFormat: true, seperator: " ", decimal: false, enablePrinting: false) + "\n"
+        }
+        else
+        {
+            returnString += "Payload: nil\n"
+        }
+        
+        return returnString
+    }
+}
 
 public enum EtherType: UInt16, Codable
 {
