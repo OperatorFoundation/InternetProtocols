@@ -428,13 +428,154 @@ extension Ethernet
     public init?(MACDestination: Data, MACSource: Data, type: EtherType?, tag1: Data?, tag2: Data?, payload: Data, ethernetSize: UInt16? )
     {
         //FIX, add parameter validation code
-        self.MACDestination = MACDestination
-        self.MACSource = MACSource
-        self.type = type
-        self.tag1 = tag1
-        self.tag2 = tag2
-        self.payload = payload
-        self.size = ethernetSize
+        //size checks, then parse and check that results match
+        //checks to make sure the type/tag/size/length all make sense. For example if the ethertype doesn't match vlan tagging then there should be a nil tag1 and tag2. etc
+        //write test functions for this initializer
+        
+        if MACDestination.count == 6
+        {
+            self.MACDestination = MACDestination
+        }
+        else
+        {
+            return nil
+        }
+        
+        if MACSource.count == 6
+        {
+            self.MACSource = MACSource
+        }
+        else
+        {
+            return nil
+        }
+        
+        if let passedType = type
+        {
+            if let typeData = passedType.data
+            {
+                if typeData.count == 2
+                {
+                    self.type = type
+                }
+                else
+                {
+                    return nil
+                }
+            }
+            else
+            {
+                return nil
+            }
+        }
+        else
+        {
+            self.type = nil
+        }
+
+        if let passedTag1 = tag1
+        {
+            if passedTag1.count == 4
+            {
+                self.tag1 = tag1
+            }
+            else
+            {
+                return nil
+            }
+        }
+        else
+        {
+            self.tag1 = nil
+        }
+      
+        if let passedTag2 = tag2
+        {
+            if passedTag2.count == 4
+            {
+                self.tag2 = tag2
+            }
+            else
+            {
+                return nil
+            }
+        }
+        else
+        {
+            self.tag2 = nil
+        }
+        
+        if payload.count >= 46 && payload.count <= 1500
+        {
+            self.payload = payload
+        }
+        else
+        {
+            return nil
+        }
+        
+        if let passedEthernetSize = ethernetSize
+        {
+            if passedEthernetSize <= 1536 && passedEthernetSize >= 46
+            {
+                self.size = ethernetSize
+            }
+            else
+            {
+                return nil
+            }
+        }
+        else
+        {
+            self.size = nil
+        }
+        
+        
+        if let parsedEthernet = Ethernet(data: self.data)
+        {
+            if parsedEthernet.MACDestination != self.MACDestination
+            {
+                return nil
+            }
+            
+            if parsedEthernet.MACSource != self.MACSource
+            {
+                return nil
+            }
+            
+            if parsedEthernet.payload != self.payload
+            {
+                return nil
+            }
+            
+            if parsedEthernet.type != self.type
+            {
+                return nil
+            }
+            
+            if parsedEthernet.tag1 != self.tag1
+            {
+                return nil
+            }
+            
+            if parsedEthernet.tag2 != self.tag2
+            {
+                return nil
+            }
+            
+            if parsedEthernet.size != self.size
+            {
+                return nil
+            }
+            
+            
+        }
+        else
+        {
+            return nil
+        }
+
+        
     }
 
 }
@@ -734,6 +875,8 @@ extension IPv4
     public init?(version: Bits, IHL: Bits, DSCP: Bits, ECN: Bits, length: UInt16, identification: UInt16, reservedBit: Bool, dontFragment: Bool, moreFragments: Bool, fragmentOffset: Bits, ttl: UInt8, protocolNumber: IPprotocolNumber, checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?)
     {
         //FIX, add parameter validation code
+        //write test functions for this initializer
+        
         DatableConfig.endianess = .big
         self.version = version
         self.IHL = IHL
@@ -1171,6 +1314,8 @@ extension TCP
                  options: Data?, payload: Data?, IPv4: IPv4)
     {
         //FIX, add parameter validation code
+        //write test functions for this initializer
+        
         DatableConfig.endianess = .big
         self.sourcePort = sourcePort
         self.destinationPort = destinationPort
@@ -1396,6 +1541,8 @@ extension UDP
     public init?(sourcePort: UInt16, destinationPort: UInt16, length: UInt16, checksum: UInt16?, payload: Data?, IPv4: IPv4)
     {
         //FIX, add parameter validation code
+        //write test functions for this initializer
+        
         DatableConfig.endianess = .big
         
         self.sourcePort = sourcePort
