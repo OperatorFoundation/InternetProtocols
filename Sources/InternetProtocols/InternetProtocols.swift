@@ -428,6 +428,8 @@ extension Ethernet
     public init?(MACDestination: Data, MACSource: Data, type: EtherType?, tag1: Data?, tag2: Data?, payload: Data, ethernetSize: UInt16? )
     {
         //FIX, add parameter validation code
+        //use asserts for something that should always be true
+        
         //size checks, then parse and check that results match
         //checks to make sure the type/tag/size/length all make sense. For example if the ethertype doesn't match vlan tagging then there should be a nil tag1 and tag2. etc
         //write test functions for this initializer

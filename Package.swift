@@ -26,10 +26,10 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "InternetProtocols",
-            dependencies: ["SwiftPCAP", "Datable", "Bits"]),
+            dependencies: ["Datable", "Bits"]),
         .testTarget(
             name: "InternetProtocolsTests",
-            dependencies: ["InternetProtocols"])
+            dependencies: ["InternetProtocols", "SwiftPCAP"])
     ]
 )
 
