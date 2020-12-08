@@ -1262,7 +1262,9 @@ final class ParserTests: XCTestCase
             while processingFile
             {
                 let bytes = packetSource.nextPacket()
-                let timestamp = packetSource.currentHeader.ts
+                let ts = packetSource.currentHeader.ts
+                let timeInterval = Double(ts.tv_sec) + Double(ts.tv_usec) / Double(USEC_PER_SEC)
+                let timestamp = Date(timeIntervalSince1970: timeInterval)
                 
                 if bytes.count == 0
                 {
@@ -1463,7 +1465,7 @@ final class ParserTests: XCTestCase
             0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
             0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
         
-        let ourTime: timeval = timeval()
+        let ourTime = Date()
         
         let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
         
@@ -1512,8 +1514,7 @@ final class ParserTests: XCTestCase
             0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
             0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
         
-        let ourTime: timeval = timeval()
-        
+        let ourTime = Date()
         let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
         
         guard let ourIP = ourPacket.ipv4 else
@@ -1580,7 +1581,7 @@ final class ParserTests: XCTestCase
             0x1f, 0xa7, 0x00, 0x50, 0x08, 0x30, 0x3d, 0xe4, 0xa9, 0x33, 0x99, 0x5f, 0xcf, 0x79, 0x70, 0x12,
             0x05, 0xb4, 0x0b, 0xeb, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x01, 0x01, 0x04, 0x02])
         
-        let ourTime: timeval = timeval()
+        let ourTime = Date()
         
         let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
         
@@ -1669,8 +1670,7 @@ final class ParserTests: XCTestCase
             0x1b, 0x02, 0x02, 0x01
         ])
         
-        let ourTime: timeval = timeval()
-        
+        let ourTime = Date()
         let ourPacket = Packet(rawBytes: packetBytes, timestamp: ourTime, debugPrints: false)
         
         guard let ourIP = ourPacket.ipv4 else
