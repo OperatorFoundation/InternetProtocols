@@ -18,7 +18,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/OperatorFoundation/SwiftPCAP.git", from: "1.1.7"),
-        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.2"),
+        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.4"),
         .package(url: "https://github.com/OperatorFoundation/Bits.git", from: "1.0.6"),
     ],
     targets: [
