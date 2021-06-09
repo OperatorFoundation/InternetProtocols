@@ -314,13 +314,13 @@ extension Ethernet: MaybeDatable
             self.type = tempType
             
         case nil:
-            if debugPrint { print("・ This EtherType is unknown: \(tempType)") }
+            if debugPrint { print("・ This EtherType is unknown: \(String(describing: tempType))") }
             self.tag1 = nil
             self.tag2 = nil
             self.type = tempType
             
         default:
-            if debugPrint { print("・ This EtherType is not currently handled: \(tempType)") }
+            if debugPrint { print("・ This EtherType is not currently handled: \(String(describing: tempType))") }
             self.tag1 = nil
             self.tag2 = nil
             self.type = tempType
