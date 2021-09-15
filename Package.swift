@@ -15,7 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/OperatorFoundation/Bits.git", from: "1.1.0"),
-        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.5"),
+        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.6"),
         .package(url: "https://github.com/OperatorFoundation/SwiftPCAP.git", from: "1.3.1"),
     ],
     targets: [
