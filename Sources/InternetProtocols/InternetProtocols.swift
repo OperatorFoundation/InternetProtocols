@@ -663,24 +663,24 @@ extension IPv4: MaybeDatable
         var VerIHLbits = Bits(data: VerIHL)
         
         guard let version = VerIHLbits.unpack(bits: 4) else { return nil }
-        guard let versionUint8 = version.uint8 else { return nil }
+        guard let versionUint8 = version.maybeNetworkUint8 else { return nil }
         self.version = version //Uint8
         if debugPrint { print("・ Version: 0x" + String(format: "%02x", versionUint8)) }
         
         guard let IHL = VerIHLbits.unpack(bits: 4) else { return nil }
-        guard let IHLUint8 = IHL.uint8 else { return nil }
+        guard let IHLUint8 = IHL.maybeNetworkUint8 else { return nil }
         self.IHL = IHL //Uint8
         if debugPrint { print("・ IHL: 0x" + String(format: "%02x", IHLUint8)) }
         
         guard let DSCPECN = bits.unpack(bytes: 1) else { return nil }
         var DSCPECNbits = Bits(data: DSCPECN)
         guard let DSCP = DSCPECNbits.unpack(bits: 6) else { return nil }
-        guard let DSCPUint8 = DSCP.uint8 else { return nil }
+        guard let DSCPUint8 = DSCP.maybeNetworkUint8 else { return nil }
         self.DSCP = DSCP //Uint8
         if debugPrint { print("・ DSCP: 0x" + String(format: "%02x", DSCPUint8)) }
         
         guard let ECN = DSCPECNbits.unpack(bits: 2) else { return nil }
-        guard let ECNUint8 = ECN.uint8 else { return nil }
+        guard let ECNUint8 = ECN.maybeNetworkUint8 else { return nil }
         self.ECN = ECN //Uint8
         if debugPrint { print("・ ECN: 0x" + String(format: "%02x", ECNUint8)) }
         
@@ -714,7 +714,7 @@ extension IPv4: MaybeDatable
         
         DatableConfig.endianess = .big
         guard let fragmentOffset = flagsFragmentOffsetbits.unpack(bits: 13) else { return nil }
-        guard let fragmentOffsetUint16 = fragmentOffset.uint16 else { return nil }
+        guard let fragmentOffsetUint16 = fragmentOffset.maybeNetworkUint16 else { return nil }
         self.fragmentOffset = fragmentOffset //Uint16
         if debugPrint { print("・ FragmentOffset: 0d" + String(format: "%u", fragmentOffsetUint16)) }
         DatableConfig.endianess = .little
@@ -962,7 +962,7 @@ extension IPv4
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
         
-        let TCPLen = self.length - (self.IHL.uint16! * 4)
+        let TCPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
         results.append(TCPLen.data)
         
         return results
@@ -977,7 +977,7 @@ extension IPv4
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
         
-        let UDPLen = self.length - (self.IHL.uint16! * 4)
+        let UDPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
         results.append(UDPLen.data)
         
         return results
@@ -992,16 +992,16 @@ extension IPv4: CustomStringConvertible
         //return IPv4 values of interest as a human readable string
         var returnString: String = ""
         
-        guard let versionUint8 = version.uint8 else { return "Error converting version" }
+        guard let versionUint8 = version.maybeNetworkUint8 else { return "Error converting version" }
         returnString += "Version: 0x" + String(format: "%02x", versionUint8) + " - 0b" + String(versionUint8, radix: 2) + "\n"
         
-        guard let IHLUint8 = IHL.uint8 else { return "Error converting IHL" }
+        guard let IHLUint8 = IHL.maybeNetworkUint8 else { return "Error converting IHL" }
         returnString += "IHL: 0x" + String(format: "%02x", IHLUint8) + " - 0b" + String(IHLUint8, radix: 2) + "(" + String(IHLUint8 * 4) + " bytes)\n"
         
-        guard let DSCPUint8 = DSCP.uint8 else { return "Error converting DSCP" }
+        guard let DSCPUint8 = DSCP.maybeNetworkUint8 else { return "Error converting DSCP" }
         returnString += "DSCP: 0x" + String(format: "%02x", DSCPUint8) + " - 0b" + String(DSCPUint8, radix: 2) + "\n"
         
-        guard let ECNUint8 = ECN.uint8 else { return "Error converting ECN" }
+        guard let ECNUint8 = ECN.maybeNetworkUint8 else { return "Error converting ECN" }
         returnString += "ECN: 0x" + String(format: "%02x", ECNUint8) + " - 0b" + String(ECNUint8, radix: 2) + "\n"
         
         returnString += "Length: 0x" + String(format: "%04x", self.length) + " - 0d" + self.length.string + "\n"
@@ -1011,7 +1011,7 @@ extension IPv4: CustomStringConvertible
         returnString += "Don't Fragment: " + String(self.dontFragment) + "\n"
         returnString += "More Fragments: " + String(self.moreFragments) + "\n"
         
-        guard let fragmentOffsetUint16 = fragmentOffset.uint16 else { return "Error converting Fragment Offset" }
+        guard let fragmentOffsetUint16 = fragmentOffset.maybeNetworkUint16 else { return "Error converting Fragment Offset" }
         returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffsetUint16) + " - 0d" + String(fragmentOffsetUint16) + "\n"
         
         returnString += "TTL: 0x" + String(format: "%02x", self.ttl) + " - 0d" + self.ttl.string + "\n"
@@ -1166,12 +1166,12 @@ extension TCP: MaybeDatable
         DatableConfig.endianess = .little
         
         guard let offset = dataReservedFlagsBits.unpack(bits: 4) else { return nil }
-        guard let offsetUint8 = offset.uint8 else { return nil }
+        guard let offsetUint8 = offset.maybeNetworkUint8 else { return nil }
         self.offset = offset
         if debugPrint { print("・ Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2)) }
         
         guard let reserved = dataReservedFlagsBits.unpack(bits: 3) else { return nil }
-        guard let reservedUint8 = reserved.uint8 else { return nil }
+        guard let reservedUint8 = reserved.maybeNetworkUint8 else { return nil }
         self.reserved = reserved
         if debugPrint { print("・ reserved: 0x" + String(format: "%02x", reservedUint8) + " - 0b" + String(reservedUint8, radix: 2)) }
         
@@ -1410,10 +1410,10 @@ extension TCP: CustomStringConvertible
         returnString += "Acknowledgement Number: "
         returnString += printDataBytes(bytes: acknowledgementNumber.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false) + "\n"
         
-        guard let offsetUint8 = offset.uint8 else { return "Error converting offset" }
+        guard let offsetUint8 = offset.maybeNetworkUint8 else { return "Error converting offset" }
         returnString += "Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2) + "\n"
         
-        guard let reservedUint8 = reserved.uint8 else { return "Error converting reserved" }
+        guard let reservedUint8 = reserved.maybeNetworkUint8 else { return "Error converting reserved" }
         returnString += "Reserved: 0x" + String(format: "%02x", reservedUint8) + " - 0b" + String(reservedUint8, radix: 2) + "\n"
         
         returnString += "NS: " + String(self.ns) + "\n"
@@ -1701,14 +1701,14 @@ extension IPversion
 {
     public init?(bits: Bits)
     {
-        guard let x = bits.int else { return nil }
+        guard let x = bits.maybeNetworkInt else { return nil }
         self.init(rawValue: x)
     }
     
     public var bits: Bits?
     {
         let x = self.rawValue
-        return Bits(int: x)
+        return Bits(maybeNetworkInt: x)
     }
     
 }
