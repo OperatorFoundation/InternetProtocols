@@ -112,7 +112,46 @@ public struct Packet: Codable
     public var tcp: TCP?
     public var udp: UDP?
     public var debugPrints: Bool?
-    
+
+    public init(ipv4Bytes: Data, timestamp: Date, debugPrints: Bool = false)
+    {
+        debugPrint = debugPrints
+
+        self.rawBytes = ipv4Bytes
+
+        // Multiply time interval by 1,000,000 before converting to an int to retain microseconds precision
+        self.timestamp = Int(timestamp.timeIntervalSince1970 * 1000000)
+
+        if debugPrint
+        {
+            print("・ timestamp (in microseconds): \(self.timestamp)")
+        }
+
+        if let IPv4Packet = IPv4(data: ipv4Bytes)
+        {
+            self.ipv4 = IPv4Packet
+
+            if let payload = IPv4Packet.payload
+            {
+                switch IPv4Packet.protocolNumber
+                {
+                    case .TCP:
+                        if let TCPsegment = TCP(data: payload)
+                        {
+                            self.tcp = TCPsegment
+                        }
+                    case .UDP:
+                        if let UDPsegment = UDP(data: payload)
+                        {
+                            self.udp = UDPsegment
+                        }
+                    default :
+                        return
+                }
+            }
+        }
+    }
+
     public init(rawBytes: Data, timestamp: Date,  debugPrints: Bool = false)
     {
         debugPrint = debugPrints
