@@ -699,6 +699,7 @@ extension IPv4: MaybeDatable
         
         guard let version = VerIHLbits.unpack(bits: 4) else { return nil }
         guard let versionUint8 = version.maybeNetworkUint8 else { return nil }
+        guard versionUint8 == 4 else { return nil }
         self.version = version //Uint8
         if debugPrint { print("・ Version: 0x" + String(format: "%02x", versionUint8)) }
         
@@ -1623,7 +1624,7 @@ extension UDP: CustomStringConvertible
 public enum EtherType: UInt16, Codable
 {
     /*
-     if the value is less than 1536 (0x600) are size and not ethertype
+     values less than 1536 (0x600) are size and not ethertype,
      values at or above 0x600 are ethertype
      */
     case sizeNotEtherType = 0x0000
