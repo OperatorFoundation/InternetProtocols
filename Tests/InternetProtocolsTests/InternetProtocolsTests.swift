@@ -569,10 +569,19 @@ final class ParserTests: XCTestCase
             return
         }
         
-        let ipv = IPversion(rawValue: 0x04)
-        let result = ipv?.bits?.uint
+        guard let ipv = IPversion(rawValue: 0x04) else {
+            XCTFail()
+            return
+        }
         
-        XCTAssertEqual(correct.uint, result)
+        guard var ipv4Bits = ipv.bits else {
+            XCTFail()
+            return
+        }
+        
+        let result = ipv4Bits.unpackByte()
+        
+        XCTAssertEqual(correct.unpackByte(), result)
     }
     
     func testEthernetIPv4Init()
