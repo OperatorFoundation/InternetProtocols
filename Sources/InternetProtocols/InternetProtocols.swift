@@ -1017,11 +1017,11 @@ extension IPv4
 
 extension IPv4
 {
-    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, tcp: TCP)
+    public init(sourceAddress: IPv4Address, destinationAddress: IPv4Address, tcp: TCP) throws
     {
         // FIXME - Implement this constructor
 
-        return nil
+        throw InternetProtocolsError.FIXME
     }
 }
 
@@ -1426,7 +1426,7 @@ extension TCP
 
 extension TCP
 {
-    public init(sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false) throws
+    public init(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false) throws
     {
         // FIXME - implement this constructor
 
