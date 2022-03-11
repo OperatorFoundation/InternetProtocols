@@ -652,16 +652,16 @@ final class ParserTests: XCTestCase
             
             if let IPv4part = IPv4(data: epacket.payload)
             {
-                guard let IPv4partVersion = IPv4part.version.uint8 else { XCTFail(); return }
+                guard let IPv4partVersion = IPv4part.version.data.uint8 else { XCTFail(); return }
                 XCTAssertEqual(IPv4partVersion, correctIPv4version)
                 
-                guard let IPv4partIHL = IPv4part.IHL.uint8 else { XCTFail(); return }
+                guard let IPv4partIHL = IPv4part.IHL.data.uint8 else { XCTFail(); return }
                 XCTAssertEqual(IPv4partIHL, correctIPv4IHL)
                 
-                guard let IPv4partDSCP = IPv4part.DSCP.uint8 else { XCTFail(); return }
+                guard let IPv4partDSCP = IPv4part.DSCP.data.uint8 else { XCTFail(); return }
                 XCTAssertEqual(IPv4partDSCP, correctIPv4DSCP)
                 
-                guard let IPv4partECN = IPv4part.ECN.uint8 else { XCTFail(); return }
+                guard let IPv4partECN = IPv4part.ECN.data.uint8 else { XCTFail(); return }
                 XCTAssertEqual(IPv4partECN, correctIPv4ECN)
                 
                 
@@ -676,7 +676,7 @@ final class ParserTests: XCTestCase
                 
                 XCTAssertEqual(IPv4part.moreFragments, correctIPv4moreFragments)
                 
-                guard let IPv4partFragmentOffset = IPv4part.fragmentOffset.uint16 else { XCTFail(); return }
+                guard let IPv4partFragmentOffset = IPv4part.fragmentOffset.data.uint16 else { XCTFail(); return }
                 XCTAssertEqual(IPv4partFragmentOffset, correctIPv4fragmentOffset)
                 
                 
@@ -790,10 +790,10 @@ final class ParserTests: XCTestCase
             XCTAssertEqual(TCPsegment.sequenceNumber, correctSequenceNumber)
             XCTAssertEqual(TCPsegment.acknowledgementNumber, correctAcknowledgementNumber)
             
-            guard let TCPsegmentOffset = TCPsegment.offset.uint8 else { XCTFail(); return }
+            guard let TCPsegmentOffset = TCPsegment.offset.data.uint8 else { XCTFail(); return }
             XCTAssertEqual(TCPsegmentOffset, correctOffset)
             
-            guard let TCPsegmentReserved = TCPsegment.reserved.uint8 else { XCTFail(); return }
+            guard let TCPsegmentReserved = TCPsegment.reserved.data.uint8 else { XCTFail(); return }
             XCTAssertEqual(TCPsegmentReserved, correctReserved)
             
             XCTAssertEqual(TCPsegment.ns, correctNS)
@@ -1270,7 +1270,11 @@ final class ParserTests: XCTestCase
             print("👉 reading packets")
             while processingFile
             {
-                let bytes = packetSource.nextPacket()
+                guard let bytes = packetSource.nextPacket() else {
+                    print("couldnt get next packet from packet source")
+                    XCTFail()
+                    return
+                }
                 let ts = packetSource.currentHeader.ts
                 let timeInterval = Double(ts.tv_sec) + Double(ts.tv_usec) / Double(USEC_PER_SEC)
                 let timestamp = Date(timeIntervalSince1970: timeInterval)
@@ -1321,10 +1325,10 @@ final class ParserTests: XCTestCase
                     if thisPacket.ipv4 != nil
                     {
                         print("➢ checking IP")//, terminator:"")
-                        XCTAssertEqual(thisTsharkPacket.ip_version, thisPacket.ipv4!.version.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_hdr_len, thisPacket.ipv4!.IHL.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_dscp, thisPacket.ipv4!.DSCP.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_ecn, thisPacket.ipv4!.ECN.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_version, thisPacket.ipv4!.version.data.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_hdr_len, thisPacket.ipv4!.IHL.data.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_dscp, thisPacket.ipv4!.DSCP.data.uint8)
+                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_ecn, thisPacket.ipv4!.ECN.data.uint8)
                         XCTAssertEqual(thisTsharkPacket.ip_len, thisPacket.ipv4!.length)
                         XCTAssertEqual(thisTsharkPacket.ip_id, thisPacket.ipv4!.identification)
                         XCTAssertEqual(thisTsharkPacket.ip_flags_rb, thisPacket.ipv4!.reservedBit)
@@ -1332,7 +1336,7 @@ final class ParserTests: XCTestCase
                         XCTAssertEqual(thisTsharkPacket.ip_flags_mf, thisPacket.ipv4!.moreFragments)
                         
                         DatableConfig.endianess = .big
-                        let thisPacketFragOffset = thisPacket.ipv4!.fragmentOffset.uint16
+                        let thisPacketFragOffset = thisPacket.ipv4!.fragmentOffset.data.uint16
                         DatableConfig.endianess = .little
                         
                         XCTAssertEqual(thisTsharkPacket.ip_frag_offset, thisPacketFragOffset)
@@ -1349,8 +1353,8 @@ final class ParserTests: XCTestCase
                         print("➢ checking TCP")//, terminator:"")
                         XCTAssertEqual(thisTsharkPacket.tcp_srcport, thisPacket.tcp!.sourcePort)
                         XCTAssertEqual(thisTsharkPacket.tcp_dstport, thisPacket.tcp!.destinationPort)
-                        XCTAssertEqual(thisTsharkPacket.tcp_hdr_len, thisPacket.tcp!.offset.uint8 )
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_res, thisPacket.tcp!.reserved.uint8)
+                        XCTAssertEqual(thisTsharkPacket.tcp_hdr_len, thisPacket.tcp!.offset.data.uint8 )
+                        XCTAssertEqual(thisTsharkPacket.tcp_flags_res, thisPacket.tcp!.reserved.data.uint8)
                         XCTAssertEqual(thisTsharkPacket.tcp_flags_ns, thisPacket.tcp!.ns)
                         XCTAssertEqual(thisTsharkPacket.tcp_flags_cwr, thisPacket.tcp!.cwr)
                         XCTAssertEqual(thisTsharkPacket.tcp_flags_ecn, thisPacket.tcp!.ece)
