@@ -8,6 +8,7 @@
 import Foundation
 import Datable
 import Bits
+import Net
 
 public var debugPrint: Bool = false
 
@@ -1014,6 +1015,16 @@ extension IPv4
     
 }
 
+extension IPv4
+{
+    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, tcp: TCP)
+    {
+        // FIXME - Implement this constructor
+
+        return nil
+    }
+}
+
 extension IPv4: CustomStringConvertible
 {
     public var description: String {
@@ -1411,6 +1422,16 @@ extension TCP
     }
     
     
+}
+
+extension TCP
+{
+    public init(sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false) throws
+    {
+        // FIXME - implement this constructor
+
+        throw InternetProtocolsError.FIXME
+    }
 }
 
 extension TCP: CustomStringConvertible
@@ -2254,4 +2275,9 @@ extension IPprotocolNumber
         return Data(maybeNetworkUint8: x)
     }
     
+}
+
+public enum InternetProtocolsError: Error
+{
+    case FIXME
 }
