@@ -5,9 +5,10 @@
 //  Created by Dr. Brandon Wiley on 3/10/22.
 //
 
+import Datable
 import Foundation
 
-public struct SequenceNumber: Equatable, Comparable
+public struct SequenceNumber: Equatable, Comparable, Datable
 {
     static public let max: SequenceNumber = SequenceNumber(UInt32.max - 1)
 
@@ -38,13 +39,22 @@ public struct SequenceNumber: Equatable, Comparable
     }
 
     public let uint32: UInt32
-
+    public var data: Data {
+        return self.uint32.maybeNetworkData!
+    }
+    
     public init(_ uint32: UInt32)
     {
         self.uint32 = UInt32(uint32)
     }
 
     public init(_ data: Data)
+    {
+        let uint32 = data.maybeNetworkUint32!
+        self.init(uint32)
+    }
+    
+    public init(data: Data)
     {
         let uint32 = data.maybeNetworkUint32!
         self.init(uint32)
@@ -82,4 +92,6 @@ public struct SequenceNumber: Equatable, Comparable
 
         return SequenceNumber(newUint32)
     }
+    
+    
 }

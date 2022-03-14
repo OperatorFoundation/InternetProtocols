@@ -14,6 +14,8 @@ public struct IPv4: Codable
 {
     //http://www.networksorcery.com/enp/protocol/ip.htm
     
+    static let internetHeaderLengthNoOptions: UInt8 = 5
+    
     public let version: Bits //UInt8 //4 bits
     public let IHL: Bits //UInt8 //4 bits
     public let DSCP: Bits //UInt8 //6 bits
@@ -364,11 +366,67 @@ extension IPv4
 
 extension IPv4
 {
-    public init(sourceAddress: IPv4Address, destinationAddress: IPv4Address, tcp: TCP) throws
+    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, payload: Data?, protocolNumber: IPprotocolNumber) throws
     {
-        // FIXME - Implement this constructor
-
-        throw InternetProtocolsError.FIXME
+    //  checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?
+        guard let version = Bits(byte: 4, droppingFromLeft: 4) else {
+            return nil
+        }
+        
+        guard let ihl = Bits(byte: IPv4.internetHeaderLengthNoOptions, droppingFromLeft: 4) else {
+            return nil
+        }
+                
+        // TODO: might need to change later, unsure of proper value
+        // see Configuration guidelines section, Service class: Standard in: https://en.wikipedia.org/wiki/Differentiated_services
+        guard let dscp = Bits(byte: 0, droppingFromRight: 2) else {
+            return nil
+        }
+        
+        // TODO: might need to change later, unsure of proper value
+        // see Operation of ECN with IP section in: https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
+        guard let ecn = Bits(byte: 0, droppingFromLeft: 6) else {
+            return nil
+        }
+        
+        let length: UInt16
+        if let payload = payload {
+            length = UInt16(payload.count) + UInt16(IPv4.internetHeaderLengthNoOptions)
+        } else {
+            length = UInt16(IPv4.internetHeaderLengthNoOptions)
+        }
+        
+        // see https://datatracker.ietf.org/doc/html/rfc6864
+        let identification = UInt16.random(in: 0...UInt16.max)
+        
+        let reservedBit = false
+        let dontFragment = false
+        let moreFragments = false
+        
+        guard let fragmentOffset = Bits(byte: 0, droppingFromLeft: 3) else {
+            return nil
+        }
+        
+        // see https://en.wikipedia.org/wiki/Time_to_live#:~:text=In%20the%20IPv4%20header%2C%20TTL,recommended%20initial%20value%20is%2064
+        let ttl = UInt8(64)
+        
+        let protocolNumber = protocolNumber
+        
+        self.init(version: version, IHL: ihl, DSCP: dscp, ECN: ecn, length: length, identification: identification, reservedBit: reservedBit, dontFragment: dontFragment, moreFragments: moreFragments, fragmentOffset: fragmentOffset, ttl: ttl, protocolNumber: protocolNumber, checksum: nil, sourceAddress: sourceAddress.rawValue, destinationAddress: destinationAddress.rawValue, options: nil, payload: payload, ethernetPadding: nil)
+    }
+    
+    // returns IPv4 header with TCP payload
+    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
+    {
+        guard let ipv4 = try IPv4(sourceAddress: sourceAddress, destinationAddress: destinationAddress, payload: nil, protocolNumber: IPprotocolNumber.TCP) else {
+            return nil
+        }
+        
+        guard let tcp = try TCP(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber, acknowledgementNumber: acknowledgementNumber, syn: syn, ack: ack, fin: fin, rst: rst, windowSize: windowSize, payload: payload, ipv4: ipv4) else {
+            return nil
+        }
+        
+        try self.init(sourceAddress: sourceAddress, destinationAddress: destinationAddress, payload: tcp.data, protocolNumber: IPprotocolNumber.TCP)
     }
 }
 
@@ -441,3 +499,5 @@ extension IPv4: CustomStringConvertible
         return returnString
     }
 }
+
+

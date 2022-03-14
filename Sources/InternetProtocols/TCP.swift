@@ -11,6 +11,8 @@ import Datable
 
 public struct TCP: Codable
 {
+    static let tcpDataOffsetNoOptions: Bits! = Bits(byte: 5, droppingFromLeft: 4)
+    
     public let sourcePort: UInt16 //2 bytes
     public let destinationPort: UInt16 //2 bytes
     public let sequenceNumber: Data //4 bytes
@@ -302,11 +304,23 @@ extension TCP
 
 extension TCP
 {
-    public init(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false) throws
+    // does not calculate checksum
+    // used exclusively for the IPv4 init with TCP payload
+    public init(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
     {
-        // FIXME - implement this constructor
+        let reserved: Bits! = Bits(byte: 0, droppingFromLeft: 5)
 
-        throw InternetProtocolsError.FIXME
+        // does not calculate checksum
+        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: 0, urgentPointer: 0, options: nil, payload: payload)
+    }
+    
+    // does calculate checksum, but requires IPv4 parameter
+    public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil, ipv4: IPv4) throws
+    {
+        let reserved: Bits! = Bits(byte: 0, droppingFromLeft: 5)
+    
+        
+        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: nil, urgentPointer: 0, options: nil, payload: payload, IPv4: ipv4)
     }
 }
 

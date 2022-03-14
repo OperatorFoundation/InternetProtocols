@@ -8,6 +8,7 @@
 import Foundation
 import Bits
 import Datable
+import Network
 
 public struct UDP: Codable
 {
@@ -84,6 +85,28 @@ extension UDP: MaybeDatable
 
 extension UDP
 {
+    static let udpHeaderLength = 8
+    
+    public init?(sourcePort: UInt16, destinationPort: UInt16, payload: Data?) {
+        self.sourcePort = sourcePort
+        self.destinationPort = destinationPort
+        self.payload = payload
+        
+        
+        let length: Int
+        if let payload = payload {
+            length = payload.count + UDP.udpHeaderLength
+        } else {
+            length = UDP.udpHeaderLength
+        }
+        
+        guard length <= 65507 else {
+            return nil
+        }
+        self.length = UInt16(length)
+        self.checksum = UInt16(0)
+    }
+    
     public init?(sourcePort: UInt16, destinationPort: UInt16, length: UInt16, checksum: UInt16?, payload: Data?, IPv4: IPv4)
     {
         //FIX, add parameter validation code
@@ -100,33 +123,7 @@ extension UDP
         }
         else
         {
-            var checksumData: Data = Data()
-            
-            let psuedoheader = IPv4.pseudoHeaderUDP
-            
-            checksumData.append(psuedoheader)
-            checksumData.append(self.sourcePort.data)
-            checksumData.append(self.destinationPort.data)
-            checksumData.append(self.length.data)
-            
-            if let payloadData = self.payload
-            {
-                checksumData.append(payloadData)
-            }
-            
-            if checksumData.count % 2 != 0
-            {
-                checksumData.append(0x00)
-            }
-            
-            if let checkresult = calculateChecksum(bytes: checksumData)
-            {
-                self.checksum = checkresult
-            }
-            else
-            {
-                return nil
-            }
+            self.checksum = UInt16(0)
         }
     }
 }
