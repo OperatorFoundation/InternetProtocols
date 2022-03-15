@@ -5,10 +5,10 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
-import Datable
-import Net
 import Bits
+import Datable
+import Foundation
+import Net
 
 public struct IPv4: Codable
 {

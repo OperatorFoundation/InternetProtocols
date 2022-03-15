@@ -5,9 +5,9 @@
 //  Created by Dr. Brandon Wiley on 3/9/20.
 //
 
-import Foundation
-import Datable
 import Bits
+import Datable
+import Foundation
 import Net
 
 public var debugPrint: Bool = false

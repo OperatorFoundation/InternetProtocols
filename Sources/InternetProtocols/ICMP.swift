@@ -7,9 +7,9 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
-import Datable
 import Bits
+import Datable
+import Foundation
 
 public struct ICMP: Codable
 {

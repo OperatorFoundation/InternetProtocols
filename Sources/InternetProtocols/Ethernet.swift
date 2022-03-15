@@ -5,9 +5,9 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
-import Datable
 import Bits
+import Datable
+import Foundation
 
 // IEEE 802.3 Ethernet frame
 public struct Ethernet: Codable

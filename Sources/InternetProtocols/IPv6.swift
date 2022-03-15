@@ -5,8 +5,8 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
 import Bits
+import Foundation
 
 public struct IPv6: Codable
 {

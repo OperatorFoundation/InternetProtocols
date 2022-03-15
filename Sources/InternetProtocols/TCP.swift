@@ -5,9 +5,9 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
 import Bits
 import Datable
+import Foundation
 
 public struct TCP: Codable
 {

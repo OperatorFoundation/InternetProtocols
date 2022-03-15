@@ -5,10 +5,10 @@
 //  Created by Joshua Clark on 3/11/22.
 //
 
-import Foundation
 import Bits
 import Datable
-import Network
+import Foundation
+import Net
 
 public struct UDP: Codable
 {
