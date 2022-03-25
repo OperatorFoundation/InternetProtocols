@@ -448,7 +448,7 @@ extension IPv4: CustomStringConvertible
         returnString += "Don't Fragment: " + String(self.dontFragment) + "\n"
         returnString += "More Fragments: " + String(self.moreFragments) + "\n"
         
-        returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffset) + " - 0d" + String(fragmentOffsetUint16) + "\n"
+        returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffset) + "\n"
         
         returnString += "TTL: 0x" + String(format: "%02x", self.ttl) + " - 0d" + self.ttl.string + "\n"
         
