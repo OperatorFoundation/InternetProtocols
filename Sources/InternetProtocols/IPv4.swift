@@ -321,14 +321,8 @@ extension IPv4
             {
                 return nil
             }
-            
         }
-        
-        
-        
-        
     }
-    
     
     var pseudoHeaderTCP: Data
     {
@@ -360,8 +354,6 @@ extension IPv4
         
         return results
     }
-    
-    
 }
 
 extension IPv4
@@ -391,7 +383,7 @@ extension IPv4
         
         let length: UInt16
         if let payload = payload {
-            length = UInt16(payload.count) + UInt16(IPv4.internetHeaderLengthNoOptions)
+            length = UInt16(payload.count) + UInt16(IPv4.internetHeaderLengthNoOptions * 4)
         } else {
             length = UInt16(IPv4.internetHeaderLengthNoOptions)
         }
