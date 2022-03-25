@@ -91,9 +91,9 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     {
         let twoBytes = ourBytes.subdata( in: (i*2)..<(i*2+2) )
         
-        guard let value = twoBytes.maybeNetworkUint32 else { return nil } //convert bytes to number value
+        guard let value = twoBytes.maybeNetworkUint16 else { return nil } //convert bytes to number value
         
-        sum += value //add number value to sum
+        sum += UInt32(value) //add number value to sum
         if sum > 0xFFFF //handle carry by subtracting 0xFFFF
         {
             sum -= 0xFFFF

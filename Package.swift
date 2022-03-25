@@ -17,7 +17,6 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/Bits.git", branch: "main"),
         .package(url: "https://github.com/OperatorFoundation/Datable.git", branch: "main"),
         .package(url: "https://github.com/OperatorFoundation/Net.git", branch: "main"),
-        .package(url: "https://github.com/OperatorFoundation/SwiftPCAP.git", branch: "main"),
     ],
     targets: [
         .target(
@@ -25,7 +24,7 @@ let package = Package(
             dependencies: ["Bits", "Datable", "Net"]),
         .testTarget(
             name: "InternetProtocolsTests",
-            dependencies: ["InternetProtocols", "SwiftPCAP"])
+            dependencies: ["InternetProtocols"])
     ],
     swiftLanguageVersions: [.v5]
 )

@@ -9,7 +9,7 @@ import Foundation
 import XCTest
 import Datable
 import Bits
-import SwiftPCAP
+//import SwiftPCAP
 @testable import InternetProtocols
 
 
@@ -1164,268 +1164,268 @@ final class ParserTests: XCTestCase
     }
     
     
-    func testWithPCAPs()
-    {
-        /*
-         This test function loads a pcap and a text file created by tshark with as many parsed fields as possible. The test then compares the results of InternetProtocols' parsing against Tshark's parsing.
-         Any pcap can be used, just place a copy of the pcap in "TestResources" and rerun  processPCAPsWithTshark.sh to generate the tshark parsed text file.
-         
-         Note, this function uses a bundle to access pcap files used for testing
-         These are located in the directory "TestResources"
-         file name requirements:
-         <name>.pcap - pcap file to test against
-         <name>.pcap.txt - tshark pcap parsing results. note these are not the complete packet dissection results but it has most fields and is easy to handle. JSON is a more complete tshark result, but the parsing seems much more involved
-         
-         In xcode, to get this to work:
-         swift package update
-         swift package generate-xcodeproj
-         open the xcode project
-         select InternetProtocolsTests under Targets
-         click +, to add a new build phase, select New Copy Bundle Resources Phase
-         expand Copy Bundle Resources
-         under the new phase, click +, to add items to the phase, select TestResources folder and click Add
-         now when the tests are run, they will have access to the files in the TestResources folder.
-         
-         Notes on adding a bundle using SPM - not currently working for tests, but will in Swift 5.3, https://github.com/apple/swift-evolution/blob/master/proposals/0271-package-manager-resources.md
-         
-         https://medium.com/better-programming/how-to-add-resources-in-swift-package-manager-c437d44ec593
-         https://developer.apple.com/documentation/foundation/bundle
-         
-         */
-        
-        print("👋")
-        let bundleDoingTest = Bundle(for: type(of: self ))
-        print("👉 bundleDoingTest.bundlePath : \(bundleDoingTest.bundlePath)") // …/PATH/TO/Debug/ExampleTests.xctest
-        print("👉 bundleDoingTest = " + bundleDoingTest.description) // Test Case Bundle
-        
-        guard let pcapFileList = bundleDoingTest.urls(forResourcesWithExtension: "pcap", subdirectory: "TestResources") else
-        {
-            XCTFail()
-            return
-        }
-        print("👉 PCAP file count: \(pcapFileList.count)")
-        
-        if pcapFileList.count == 0
-        {
-            //PCAPs not in bundle.
-            XCTFail()
-            return
-        }
-        
-        guard let pcapTextFileList = bundleDoingTest.urls(forResourcesWithExtension: "txt", subdirectory: "TestResources") else
-        {
-            XCTFail()
-            return
-        }
-        print("👉 Text file count: \(pcapFileList.count)\n")
-        
-        if pcapFileList.count != pcapFileList.count
-        {
-            //PCAP and text file count mismatch, there should be 1 txt per PCAP
-            XCTFail()
-            return
-        }
-        
-        
-        var processingFile: Bool = true
-        var packetCount: Int
-        var fileCount: Int = 0
-        
-        for pcapFile in pcapFileList
-        {
-            packetCount = 0
-            fileCount += 1
-            print("📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦")
-            print("► Processing PCAP \(fileCount): \(pcapFile.absoluteURL)")
-            
-            guard let packetSource = try? SwiftPCAP.Offline(path: pcapFile.path ) else
-            {
-                print("‼️ Error opening pcap file")
-                XCTFail()
-                return
-            }
-            
-            let pcapTextFilePath = pcapFile.path + ".txt"
-            print ("► Text file: \(pcapTextFilePath)")
-            
-            let textFileURL = URL(fileURLWithPath:pcapTextFilePath)
-            var contents: String = ""
-            print("► Loading \(pcapTextFilePath)...")
-            do
-            {
-                contents = try String(contentsOf: textFileURL)
-                print("► File loaded...")
-            }
-            catch
-            {
-                print("‼️ Failed to load text file due to error \(error).")
-                XCTFail()
-                return
-            }
-            
-            let textFileLines = contents.components(separatedBy:"\n")
-            
-            processingFile = true
-            
-            print("👉 reading packets")
-            while processingFile
-            {
-                guard let bytes = packetSource.nextPacket() else {
-                    print("couldnt get next packet from packet source")
-                    XCTFail()
-                    return
-                }
-                let ts = packetSource.currentHeader.ts
-                let timeInterval = Double(ts.tv_sec) + Double(ts.tv_usec) / Double(USEC_PER_SEC)
-                let timestamp = Date(timeIntervalSince1970: timeInterval)
-                
-                if bytes.count == 0
-                {
-                    print("👉 done with pcap # \(fileCount)")
-                    processingFile = false
-                }
-                else
-                {
-                    packetCount += 1
-                    print("📁 \(fileCount) ► Packet \(packetCount) - bytes \(bytes.count)")
-                    
-                    let thisTsharkPacket = tsharkTextFilePacket(lineToParse: textFileLines[packetCount])
-                    
-                    XCTAssertEqual(thisTsharkPacket.frame_number, packetCount)
-                    
-                    var hasVLAN: Bool = false
-                    
-                    var debugprint: Bool = false
-                    if fileCount == 9000 && packetCount == 1
-                    {
-                        print("🎯 debug target")
-                        debugprint = true
-                    }
-                    
-                    let thisPacket = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: debugprint) //parse the packet
-                    
-                    if thisPacket.ethernet != nil
-                    {
-                        print("➢ checking ethernet")//, terminator:"")
-                        XCTAssertEqual(thisTsharkPacket.eth_src, thisPacket.ethernet!.MACSource)
-                        XCTAssertEqual(thisTsharkPacket.eth_dst, thisPacket.ethernet!.MACDestination)
-                        
-                        if thisPacket.ethernet!.tag1 == nil && thisPacket.ethernet!.type != .sizeNotEtherType
-                            //fix, when parsing vlan packets the type field is set to the inner ethernet type, and not the VLAN type - tshark views VLAN to be the ehternet type and not ipv4. so if it's a VLAN packet we skip the following test
-                        {
-                            XCTAssertEqual(thisTsharkPacket.eth_type, thisPacket.ethernet!.type)
-                        }
-                        else
-                        {
-                            print("⚠️ Packet has VLAN, which is not currently handled fully")
-                            hasVLAN = true
-                        }
-                    }
-                    
-                    if thisPacket.ipv4 != nil
-                    {
-                        print("➢ checking IP")//, terminator:"")
-                        XCTAssertEqual(thisTsharkPacket.ip_version, thisPacket.ipv4!.version.data.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_hdr_len, thisPacket.ipv4!.IHL.data.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_dscp, thisPacket.ipv4!.DSCP.data.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_ecn, thisPacket.ipv4!.ECN.data.uint8)
-                        XCTAssertEqual(thisTsharkPacket.ip_len, thisPacket.ipv4!.length)
-                        XCTAssertEqual(thisTsharkPacket.ip_id, thisPacket.ipv4!.identification)
-                        XCTAssertEqual(thisTsharkPacket.ip_flags_rb, thisPacket.ipv4!.reservedBit)
-                        XCTAssertEqual(thisTsharkPacket.ip_flags_df, thisPacket.ipv4!.dontFragment)
-                        XCTAssertEqual(thisTsharkPacket.ip_flags_mf, thisPacket.ipv4!.moreFragments)
-                        
-                        DatableConfig.endianess = .big
-                        let thisPacketFragOffset = thisPacket.ipv4!.fragmentOffset.data.uint16
-                        DatableConfig.endianess = .little
-                        
-                        XCTAssertEqual(thisTsharkPacket.ip_frag_offset, thisPacketFragOffset)
-                        XCTAssertEqual(thisTsharkPacket.ip_ttl, thisPacket.ipv4!.ttl)
-                        XCTAssertEqual(thisTsharkPacket.ip_proto, thisPacket.ipv4!.protocolNumber)
-                        XCTAssertEqual(thisTsharkPacket.ip_checksum, thisPacket.ipv4!.checksum)
-                        XCTAssertEqual(thisTsharkPacket.ip_src, thisPacket.ipv4!.sourceAddress)
-                        XCTAssertEqual(thisTsharkPacket.ip_dst, thisPacket.ipv4!.destinationAddress)
-                        XCTAssertEqual(thisTsharkPacket.eth_padding, thisPacket.ipv4!.ethernetPadding)
-                    }
-                    
-                    if thisPacket.tcp != nil //capture tcp packet
-                    {
-                        print("➢ checking TCP")//, terminator:"")
-                        XCTAssertEqual(thisTsharkPacket.tcp_srcport, thisPacket.tcp!.sourcePort)
-                        XCTAssertEqual(thisTsharkPacket.tcp_dstport, thisPacket.tcp!.destinationPort)
-                        XCTAssertEqual(thisTsharkPacket.tcp_hdr_len, thisPacket.tcp!.offset.data.uint8 )
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_res, thisPacket.tcp!.reserved.data.uint8)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ns, thisPacket.tcp!.ns)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_cwr, thisPacket.tcp!.cwr)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ecn, thisPacket.tcp!.ece)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_urg, thisPacket.tcp!.urg)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ack, thisPacket.tcp!.ack)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_push, thisPacket.tcp!.psh)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_reset, thisPacket.tcp!.rst)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_syn, thisPacket.tcp!.syn)
-                        XCTAssertEqual(thisTsharkPacket.tcp_flags_fin, thisPacket.tcp!.fin)
-                        XCTAssertEqual(thisTsharkPacket.tcp_window_size_value, thisPacket.tcp!.windowSize)
-                        XCTAssertEqual(thisTsharkPacket.tcp_checksum, thisPacket.tcp!.checksum)
-                        XCTAssertEqual(thisTsharkPacket.tcp_urgent_pointer, thisPacket.tcp!.urgentPointer)
-                        XCTAssertEqual(thisTsharkPacket.tcp_options, thisPacket.tcp!.options)
-                        XCTAssertEqual(thisTsharkPacket.tcp_payload, thisPacket.tcp!.payload)
-                    }
-                    
-                    if thisPacket.udp != nil //capture udp packet
-                    {
-                        print("➢ checking UDP")//, terminator:"")
-                        XCTAssertEqual(thisTsharkPacket.udp_srcport, thisPacket.udp!.sourcePort)
-                        XCTAssertEqual(thisTsharkPacket.udp_dstport, thisPacket.udp!.destinationPort)
-                        XCTAssertEqual(thisTsharkPacket.udp_length, thisPacket.udp!.length)
-                        XCTAssertEqual(thisTsharkPacket.udp_checksum, thisPacket.udp!.checksum)
-                    }
-                    
-                    if thisPacket.ethernet == nil && thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil
-                    {
-                        print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
-                        print("‼️ Packet not parsed, result has no Ethernet, IPv4, TCP or UDP")
-                        print("‼️ Parsing debug prints:")
-                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
-                        XCTFail()
-                    }
-                    
-                    if thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil && thisPacket.ethernet!.type != .IPv4
-                    {
-                        print("⚠️ Packet not parsed beyond ethernet, ethertype not handled")
-                        print("⚠️ ethertype: \(thisPacket.ethernet!.type)")
-                        
-                        if thisPacket.ethernet!.type == nil && hasVLAN != true {
-                            print("‼️ ethertype is nil and doesn't seem to be a VLAN issue")
-                            _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
-                            XCTFail()
-                        }
-                    }
-                    
-                    if thisPacket.ipv4 == nil && thisPacket.ethernet!.type == .IPv4
-                    {
-                        if thisPacket.ethernet!.type! == .IPv4
-                        {
-                            print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
-                            print("‼️ Packet not parsed correctly, type is IPv4 but no IPv4 results returned")
-                            print("‼️ Parsing debug prints:")
-                            _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
-                            XCTFail()
-                        }
-                    }
-                    
-                    if thisPacket.ipv4 != nil && thisPacket.tcp == nil && thisPacket.ipv4!.protocolNumber == .TCP
-                    {
-                        print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
-                        print("‼️ Packet not parsed correctly, type is IPv4 but no IPv4 results returned")
-                        print("‼️ Parsing debug prints:")
-                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
-                        XCTFail()
-                    }
-                }
-            }
-        }
-        print("✌️")
-    }
+//    func testWithPCAPs()
+//    {
+//        /*
+//         This test function loads a pcap and a text file created by tshark with as many parsed fields as possible. The test then compares the results of InternetProtocols' parsing against Tshark's parsing.
+//         Any pcap can be used, just place a copy of the pcap in "TestResources" and rerun  processPCAPsWithTshark.sh to generate the tshark parsed text file.
+//         
+//         Note, this function uses a bundle to access pcap files used for testing
+//         These are located in the directory "TestResources"
+//         file name requirements:
+//         <name>.pcap - pcap file to test against
+//         <name>.pcap.txt - tshark pcap parsing results. note these are not the complete packet dissection results but it has most fields and is easy to handle. JSON is a more complete tshark result, but the parsing seems much more involved
+//         
+//         In xcode, to get this to work:
+//         swift package update
+//         swift package generate-xcodeproj
+//         open the xcode project
+//         select InternetProtocolsTests under Targets
+//         click +, to add a new build phase, select New Copy Bundle Resources Phase
+//         expand Copy Bundle Resources
+//         under the new phase, click +, to add items to the phase, select TestResources folder and click Add
+//         now when the tests are run, they will have access to the files in the TestResources folder.
+//         
+//         Notes on adding a bundle using SPM - not currently working for tests, but will in Swift 5.3, https://github.com/apple/swift-evolution/blob/master/proposals/0271-package-manager-resources.md
+//         
+//         https://medium.com/better-programming/how-to-add-resources-in-swift-package-manager-c437d44ec593
+//         https://developer.apple.com/documentation/foundation/bundle
+//         
+//         */
+//        
+//        print("👋")
+//        let bundleDoingTest = Bundle(for: type(of: self ))
+//        print("👉 bundleDoingTest.bundlePath : \(bundleDoingTest.bundlePath)") // …/PATH/TO/Debug/ExampleTests.xctest
+//        print("👉 bundleDoingTest = " + bundleDoingTest.description) // Test Case Bundle
+//        
+//        guard let pcapFileList = bundleDoingTest.urls(forResourcesWithExtension: "pcap", subdirectory: "TestResources") else
+//        {
+//            XCTFail()
+//            return
+//        }
+//        print("👉 PCAP file count: \(pcapFileList.count)")
+//        
+//        if pcapFileList.count == 0
+//        {
+//            //PCAPs not in bundle.
+//            XCTFail()
+//            return
+//        }
+//        
+//        guard let pcapTextFileList = bundleDoingTest.urls(forResourcesWithExtension: "txt", subdirectory: "TestResources") else
+//        {
+//            XCTFail()
+//            return
+//        }
+//        print("👉 Text file count: \(pcapFileList.count)\n")
+//        
+//        if pcapFileList.count != pcapFileList.count
+//        {
+//            //PCAP and text file count mismatch, there should be 1 txt per PCAP
+//            XCTFail()
+//            return
+//        }
+//        
+//        
+//        var processingFile: Bool = true
+//        var packetCount: Int
+//        var fileCount: Int = 0
+//        
+//        for pcapFile in pcapFileList
+//        {
+//            packetCount = 0
+//            fileCount += 1
+//            print("📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦")
+//            print("► Processing PCAP \(fileCount): \(pcapFile.absoluteURL)")
+//            
+//            guard let packetSource = try? SwiftPCAP.Offline(path: pcapFile.path ) else
+//            {
+//                print("‼️ Error opening pcap file")
+//                XCTFail()
+//                return
+//            }
+//            
+//            let pcapTextFilePath = pcapFile.path + ".txt"
+//            print ("► Text file: \(pcapTextFilePath)")
+//            
+//            let textFileURL = URL(fileURLWithPath:pcapTextFilePath)
+//            var contents: String = ""
+//            print("► Loading \(pcapTextFilePath)...")
+//            do
+//            {
+//                contents = try String(contentsOf: textFileURL)
+//                print("► File loaded...")
+//            }
+//            catch
+//            {
+//                print("‼️ Failed to load text file due to error \(error).")
+//                XCTFail()
+//                return
+//            }
+//            
+//            let textFileLines = contents.components(separatedBy:"\n")
+//            
+//            processingFile = true
+//            
+//            print("👉 reading packets")
+//            while processingFile
+//            {
+//                guard let bytes = packetSource.nextPacket() else {
+//                    print("couldnt get next packet from packet source")
+//                    XCTFail()
+//                    return
+//                }
+//                let ts = packetSource.currentHeader.ts
+//                let timeInterval = Double(ts.tv_sec) + Double(ts.tv_usec) / Double(USEC_PER_SEC)
+//                let timestamp = Date(timeIntervalSince1970: timeInterval)
+//                
+//                if bytes.count == 0
+//                {
+//                    print("👉 done with pcap # \(fileCount)")
+//                    processingFile = false
+//                }
+//                else
+//                {
+//                    packetCount += 1
+//                    print("📁 \(fileCount) ► Packet \(packetCount) - bytes \(bytes.count)")
+//                    
+//                    let thisTsharkPacket = tsharkTextFilePacket(lineToParse: textFileLines[packetCount])
+//                    
+//                    XCTAssertEqual(thisTsharkPacket.frame_number, packetCount)
+//                    
+//                    var hasVLAN: Bool = false
+//                    
+//                    var debugprint: Bool = false
+//                    if fileCount == 9000 && packetCount == 1
+//                    {
+//                        print("🎯 debug target")
+//                        debugprint = true
+//                    }
+//                    
+//                    let thisPacket = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: debugprint) //parse the packet
+//                    
+//                    if thisPacket.ethernet != nil
+//                    {
+//                        print("➢ checking ethernet")//, terminator:"")
+//                        XCTAssertEqual(thisTsharkPacket.eth_src, thisPacket.ethernet!.MACSource)
+//                        XCTAssertEqual(thisTsharkPacket.eth_dst, thisPacket.ethernet!.MACDestination)
+//                        
+//                        if thisPacket.ethernet!.tag1 == nil && thisPacket.ethernet!.type != .sizeNotEtherType
+//                            //fix, when parsing vlan packets the type field is set to the inner ethernet type, and not the VLAN type - tshark views VLAN to be the ehternet type and not ipv4. so if it's a VLAN packet we skip the following test
+//                        {
+//                            XCTAssertEqual(thisTsharkPacket.eth_type, thisPacket.ethernet!.type)
+//                        }
+//                        else
+//                        {
+//                            print("⚠️ Packet has VLAN, which is not currently handled fully")
+//                            hasVLAN = true
+//                        }
+//                    }
+//                    
+//                    if thisPacket.ipv4 != nil
+//                    {
+//                        print("➢ checking IP")//, terminator:"")
+//                        XCTAssertEqual(thisTsharkPacket.ip_version, thisPacket.ipv4!.version.data.uint8)
+//                        XCTAssertEqual(thisTsharkPacket.ip_hdr_len, thisPacket.ipv4!.IHL.data.uint8)
+//                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_dscp, thisPacket.ipv4!.DSCP.data.uint8)
+//                        XCTAssertEqual(thisTsharkPacket.ip_dsfield_ecn, thisPacket.ipv4!.ECN.data.uint8)
+//                        XCTAssertEqual(thisTsharkPacket.ip_len, thisPacket.ipv4!.length)
+//                        XCTAssertEqual(thisTsharkPacket.ip_id, thisPacket.ipv4!.identification)
+//                        XCTAssertEqual(thisTsharkPacket.ip_flags_rb, thisPacket.ipv4!.reservedBit)
+//                        XCTAssertEqual(thisTsharkPacket.ip_flags_df, thisPacket.ipv4!.dontFragment)
+//                        XCTAssertEqual(thisTsharkPacket.ip_flags_mf, thisPacket.ipv4!.moreFragments)
+//                        
+//                        DatableConfig.endianess = .big
+//                        let thisPacketFragOffset = thisPacket.ipv4!.fragmentOffset.data.uint16
+//                        DatableConfig.endianess = .little
+//                        
+//                        XCTAssertEqual(thisTsharkPacket.ip_frag_offset, thisPacketFragOffset)
+//                        XCTAssertEqual(thisTsharkPacket.ip_ttl, thisPacket.ipv4!.ttl)
+//                        XCTAssertEqual(thisTsharkPacket.ip_proto, thisPacket.ipv4!.protocolNumber)
+//                        XCTAssertEqual(thisTsharkPacket.ip_checksum, thisPacket.ipv4!.checksum)
+//                        XCTAssertEqual(thisTsharkPacket.ip_src, thisPacket.ipv4!.sourceAddress)
+//                        XCTAssertEqual(thisTsharkPacket.ip_dst, thisPacket.ipv4!.destinationAddress)
+//                        XCTAssertEqual(thisTsharkPacket.eth_padding, thisPacket.ipv4!.ethernetPadding)
+//                    }
+//                    
+//                    if thisPacket.tcp != nil //capture tcp packet
+//                    {
+//                        print("➢ checking TCP")//, terminator:"")
+//                        XCTAssertEqual(thisTsharkPacket.tcp_srcport, thisPacket.tcp!.sourcePort)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_dstport, thisPacket.tcp!.destinationPort)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_hdr_len, thisPacket.tcp!.offset.data.uint8 )
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_res, thisPacket.tcp!.reserved.data.uint8)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ns, thisPacket.tcp!.ns)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_cwr, thisPacket.tcp!.cwr)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ecn, thisPacket.tcp!.ece)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_urg, thisPacket.tcp!.urg)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_ack, thisPacket.tcp!.ack)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_push, thisPacket.tcp!.psh)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_reset, thisPacket.tcp!.rst)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_syn, thisPacket.tcp!.syn)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_flags_fin, thisPacket.tcp!.fin)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_window_size_value, thisPacket.tcp!.windowSize)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_checksum, thisPacket.tcp!.checksum)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_urgent_pointer, thisPacket.tcp!.urgentPointer)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_options, thisPacket.tcp!.options)
+//                        XCTAssertEqual(thisTsharkPacket.tcp_payload, thisPacket.tcp!.payload)
+//                    }
+//                    
+//                    if thisPacket.udp != nil //capture udp packet
+//                    {
+//                        print("➢ checking UDP")//, terminator:"")
+//                        XCTAssertEqual(thisTsharkPacket.udp_srcport, thisPacket.udp!.sourcePort)
+//                        XCTAssertEqual(thisTsharkPacket.udp_dstport, thisPacket.udp!.destinationPort)
+//                        XCTAssertEqual(thisTsharkPacket.udp_length, thisPacket.udp!.length)
+//                        XCTAssertEqual(thisTsharkPacket.udp_checksum, thisPacket.udp!.checksum)
+//                    }
+//                    
+//                    if thisPacket.ethernet == nil && thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil
+//                    {
+//                        print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
+//                        print("‼️ Packet not parsed, result has no Ethernet, IPv4, TCP or UDP")
+//                        print("‼️ Parsing debug prints:")
+//                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
+//                        XCTFail()
+//                    }
+//                    
+//                    if thisPacket.ipv4 == nil && thisPacket.tcp == nil && thisPacket.udp == nil && thisPacket.ethernet!.type != .IPv4
+//                    {
+//                        print("⚠️ Packet not parsed beyond ethernet, ethertype not handled")
+//                        print("⚠️ ethertype: \(thisPacket.ethernet!.type)")
+//                        
+//                        if thisPacket.ethernet!.type == nil && hasVLAN != true {
+//                            print("‼️ ethertype is nil and doesn't seem to be a VLAN issue")
+//                            _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
+//                            XCTFail()
+//                        }
+//                    }
+//                    
+//                    if thisPacket.ipv4 == nil && thisPacket.ethernet!.type == .IPv4
+//                    {
+//                        if thisPacket.ethernet!.type! == .IPv4
+//                        {
+//                            print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
+//                            print("‼️ Packet not parsed correctly, type is IPv4 but no IPv4 results returned")
+//                            print("‼️ Parsing debug prints:")
+//                            _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
+//                            XCTFail()
+//                        }
+//                    }
+//                    
+//                    if thisPacket.ipv4 != nil && thisPacket.tcp == nil && thisPacket.ipv4!.protocolNumber == .TCP
+//                    {
+//                        print("‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️")
+//                        print("‼️ Packet not parsed correctly, type is IPv4 but no IPv4 results returned")
+//                        print("‼️ Parsing debug prints:")
+//                        _ = Packet(rawBytes: Data(bytes), timestamp: timestamp, debugPrints: true)
+//                        XCTFail()
+//                    }
+//                }
+//            }
+//        }
+//        print("✌️")
+//    }
     
     
     func testChecksum()
