@@ -25,7 +25,7 @@ public struct IPv4: Codable
     public let reservedBit: Bool //UInt8 //1 bit //bool
     public let dontFragment: Bool //UInt8 //1 bit //bool
     public let moreFragments: Bool //UInt8 //1 bit //bool
-    public let fragmentOffset: Bits //UInt16 //13 bits   --number
+    public let fragmentOffset: UInt16 //UInt16 //13 bits   --number
     public let ttl: UInt8 //1 byte   --number
     public let protocolNumber: IPprotocolNumber //UInt8 //1 byte
     public let checksum: UInt16 //2 bytes
@@ -98,7 +98,7 @@ extension IPv4: MaybeDatable
         
         guard let fragmentOffset = flagsFragmentOffsetbits.unpack(bits: 13) else { return nil }
         guard let fragmentOffsetUint16 = fragmentOffset.maybeNetworkUint16 else { return nil }
-        self.fragmentOffset = fragmentOffset //Uint16
+        self.fragmentOffset = fragmentOffsetUint16 //Uint16
         if debugPrint { print("・ FragmentOffset: 0d" + String(format: "%u", fragmentOffsetUint16)) }
         
         guard let ttl = bits.unpack(bytes: 1) else { return nil }
@@ -221,7 +221,8 @@ extension IPv4: MaybeDatable
         let _ = flagsFragOff.pack(bool: reservedBit) //1 bit
         let _ = flagsFragOff.pack(bool: dontFragment) //1 bit
         let _ = flagsFragOff.pack(bool: moreFragments) //1 bit
-        let _ = flagsFragOff.pack(bits: fragmentOffset) //13 bits
+        let fragmentOffsetBits = Bits(bytes: fragmentOffset, droppingFromLeft: 3)!
+        let _ = flagsFragOff.pack(bits: fragmentOffsetBits) //13 bits
         result.append(flagsFragOff.data)
         
         result.append(ttl)
@@ -247,7 +248,7 @@ extension IPv4: MaybeDatable
 
 extension IPv4
 {
-    public init?(version: Bits, IHL: Bits, DSCP: Bits, ECN: Bits, length: UInt16, identification: UInt16, reservedBit: Bool, dontFragment: Bool, moreFragments: Bool, fragmentOffset: Bits, ttl: UInt8, protocolNumber: IPprotocolNumber, checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?)
+    public init?(version: Bits, IHL: Bits, DSCP: Bits, ECN: Bits, length: UInt16, identification: UInt16, reservedBit: Bool, dontFragment: Bool, moreFragments: Bool, fragmentOffset: UInt16, ttl: UInt8, protocolNumber: IPprotocolNumber, checksum: UInt16?, sourceAddress: Data, destinationAddress: Data, options: Data?, payload: Data?, ethernetPadding: Data?)
     {
         //FIX, add parameter validation code
         //write test functions for this initializer
@@ -296,7 +297,11 @@ extension IPv4
             let _ = flagsFrags.pack(bool: self.reservedBit)
             let _ = flagsFrags.pack(bool: self.dontFragment)
             let _ = flagsFrags.pack(bool: self.moreFragments)
-            let _ = flagsFrags.pack(bits: self.fragmentOffset)
+            guard let fragmentOffsetBits = Bits(bytes: self.fragmentOffset, droppingFromLeft: 3) else
+            {
+                return nil
+            }
+            let _ = flagsFrags.pack(bits: fragmentOffsetBits)
             checksumData.append(flagsFrags.data)
             
             checksumData.append(self.ttl.data)
@@ -394,17 +399,13 @@ extension IPv4
         let reservedBit = false
         let dontFragment = false
         let moreFragments = false
-        
-        guard let fragmentOffset = Bits(byte: 0, droppingFromLeft: 3) else {
-            return nil
-        }
-        
+
         // see https://en.wikipedia.org/wiki/Time_to_live#:~:text=In%20the%20IPv4%20header%2C%20TTL,recommended%20initial%20value%20is%2064
         let ttl = UInt8(64)
         
         let protocolNumber = protocolNumber
         
-        self.init(version: version, IHL: ihl, DSCP: dscp, ECN: ecn, length: length, identification: identification, reservedBit: reservedBit, dontFragment: dontFragment, moreFragments: moreFragments, fragmentOffset: fragmentOffset, ttl: ttl, protocolNumber: protocolNumber, checksum: nil, sourceAddress: sourceAddress.rawValue, destinationAddress: destinationAddress.rawValue, options: nil, payload: payload, ethernetPadding: nil)
+        self.init(version: version, IHL: ihl, DSCP: dscp, ECN: ecn, length: length, identification: identification, reservedBit: reservedBit, dontFragment: dontFragment, moreFragments: moreFragments, fragmentOffset: 0, ttl: ttl, protocolNumber: protocolNumber, checksum: nil, sourceAddress: sourceAddress.rawValue, destinationAddress: destinationAddress.rawValue, options: nil, payload: payload, ethernetPadding: nil)
     }
     
     // returns IPv4 header with TCP payload
@@ -447,8 +448,7 @@ extension IPv4: CustomStringConvertible
         returnString += "Don't Fragment: " + String(self.dontFragment) + "\n"
         returnString += "More Fragments: " + String(self.moreFragments) + "\n"
         
-        guard let fragmentOffsetUint16 = fragmentOffset.maybeNetworkUint16 else { return "Error converting Fragment Offset" }
-        returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffsetUint16) + " - 0d" + String(fragmentOffsetUint16) + "\n"
+        returnString += "FragmentOffset: 0x" + String(format: "%04x", fragmentOffset) + " - 0d" + String(fragmentOffsetUint16) + "\n"
         
         returnString += "TTL: 0x" + String(format: "%02x", self.ttl) + " - 0d" + self.ttl.string + "\n"
         
