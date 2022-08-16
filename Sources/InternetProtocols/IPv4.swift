@@ -14,7 +14,7 @@ public struct IPv4: Codable
 {
     //http://www.networksorcery.com/enp/protocol/ip.htm
     
-    static let internetHeaderLengthNoOptions: UInt8 = 5
+    static let internetHeaderLengthNoOptions: UInt8 = 5 // In 4 byte chunks
     
     public let version: Bits //UInt8 //4 bits
     public let IHL: Bits //UInt8 //4 bits
@@ -329,7 +329,7 @@ extension IPv4
         }
     }
     
-    var pseudoHeaderTCP: Data
+    func pseudoHeaderTCP(tcpLength: UInt16) -> Data
     {
         var results: Data = Data()
         let reservedZero: UInt8 = 0
@@ -338,14 +338,12 @@ extension IPv4
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
-        
-        let TCPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
-        results.append(TCPLen.data)
+        results.append(tcpLength.data)
         
         return results
     }
     
-    var pseudoHeaderUDP: Data
+    func pseudoHeaderUDP(udpLength: UInt16) -> Data
     {
         var results: Data = Data()
         let reservedZero: UInt8 = 0
@@ -353,9 +351,7 @@ extension IPv4
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
-        
-        let UDPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
-        results.append(UDPLen.data)
+        results.append(udpLength.data)
         
         return results
     }
@@ -387,10 +383,13 @@ extension IPv4
         }
         
         let length: UInt16
-        if let payload = payload {
-            length = UInt16(payload.count) + UInt16(IPv4.internetHeaderLengthNoOptions * 4)
-        } else {
-            length = UInt16(IPv4.internetHeaderLengthNoOptions)
+        if let payload = payload
+        {
+            length = UInt16(payload.count) + (UInt16(IPv4.internetHeaderLengthNoOptions) * 4)
+        }
+        else
+        {
+            length = UInt16(IPv4.internetHeaderLengthNoOptions) * 4 // internetHeaderLengthNoOptions is in 4 byte chunks
         }
         
         // see https://datatracker.ietf.org/doc/html/rfc6864
