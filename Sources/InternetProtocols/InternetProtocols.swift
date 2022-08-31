@@ -114,6 +114,7 @@ public struct Packet: Codable
     public var udp: UDP?
     public var debugPrints: Bool?
 
+    // Takes an IPv4 packet
     public init(ipv4Bytes: Data, timestamp: Date, debugPrints: Bool = false)
     {
         debugPrint = debugPrints
@@ -153,6 +154,7 @@ public struct Packet: Codable
         }
     }
 
+    // Takes an Ethernet packet.
     public init(rawBytes: Data, timestamp: Date,  debugPrints: Bool = false)
     {
         debugPrint = debugPrints

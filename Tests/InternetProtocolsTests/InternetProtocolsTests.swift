@@ -12,6 +12,7 @@ import Bits
 import Datable
 //import SwiftPCAP
 @testable import InternetProtocols
+import Network
 import SwiftHexTools
 
 extension String {
@@ -19,6 +20,46 @@ extension String {
         guard self.count > 0 else { return false }
         let nums: Set<Character> = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "A", "B", "C", "D", "E", "F" ]
         return Set(self).isSubset(of: nums)
+    }
+}
+
+class generatorTest: XCTestCase
+{
+    func testIPv4PacketGenerator()
+    {
+        // * sourceAddress: IPv4Address(address: "8.8.8.8", rawValue: 4 bytes)
+        // * destinationAddress: IPv4Address(address: "10.8.0.2", rawValue: 4 bytes)
+        // * sourcePort: 853
+        // * destinationPort: 50314
+        // * sequenceNumber: SequenceNumber(uint32: 1494923601)
+        // * acknowledgementNumber: SequenceNumber(uint32: 524823999)
+        // * ack: true
+        
+        guard let sourceAddress = IPv4Address("8.8.8.8") else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let destinationAddress = IPv4Address("10.8.0.2") else
+        {
+            XCTFail()
+            return
+        }
+        
+        let sequenceNumber = SequenceNumber(1494923601)
+        let ackNumber = SequenceNumber(524823999)
+        
+        do
+        {
+            let packet = try IPv4(sourceAddress: sourceAddress, destinationAddress: destinationAddress, sourcePort: 853, destinationPort: 50314, sequenceNumber: sequenceNumber, acknowledgementNumber: ackNumber, syn: false, ack: true, fin: false, rst: true, windowSize: 0, payload: nil)
+            XCTAssertNotNil(packet)
+        }
+        catch
+        {
+            print("Failed to initialize an IPv4 Packet: \(error)")
+            XCTFail()
+        }
     }
 }
 
@@ -1635,7 +1676,7 @@ final class ParserTests: XCTestCase
             urgentPointer: ourTCP.urgentPointer,
             options: ourTCP.options,
             payload: ourTCP.payload,
-            IPv4: ourIP
+            ipv4: ourIP
             ) else
         {
             XCTFail()

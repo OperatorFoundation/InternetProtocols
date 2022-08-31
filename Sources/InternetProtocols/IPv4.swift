@@ -14,7 +14,7 @@ public struct IPv4: Codable
 {
     //http://www.networksorcery.com/enp/protocol/ip.htm
     
-    static let internetHeaderLengthNoOptions: UInt8 = 5
+    static let internetHeaderLengthNoOptions: UInt8 = 5 // In 4 byte chunks
     
     public let version: Bits //UInt8 //4 bits
     public let IHL: Bits //UInt8 //4 bits
@@ -272,64 +272,68 @@ extension IPv4
         self.payload = payload
         self.ethernetPadding = ethernetPadding
         
-        if let checksumNotNil = checksum
+        var checksumData: Data = Data()
+
+        var verIHL: Bits = Bits()
+        let _ = verIHL.pack(bits: self.version)
+        let _ = verIHL.pack(bits: self.IHL)
+        checksumData.append(verIHL.data)
+
+        var DSCPECN: Bits = Bits()
+        let _ = DSCPECN.pack(bits: self.DSCP)
+        let _ = DSCPECN.pack(bits: self.ECN)
+        checksumData.append(DSCPECN.data)
+
+        checksumData.append(self.length.data)
+        checksumData.append(self.identification.data)
+
+        var flagsFrags: Bits = Bits()
+        let _ = flagsFrags.pack(bool: self.reservedBit)
+        let _ = flagsFrags.pack(bool: self.dontFragment)
+        let _ = flagsFrags.pack(bool: self.moreFragments)
+        guard let fragmentOffsetBits = Bits(bytes: self.fragmentOffset, droppingFromLeft: 3) else
         {
-            self.checksum = checksumNotNil
+            return nil
+        }
+
+        let _ = flagsFrags.pack(bits: fragmentOffsetBits)
+        checksumData.append(flagsFrags.data)
+
+        checksumData.append(self.ttl.data)
+        checksumData.append(self.protocolNumber.rawValue)
+        checksumData.append(self.sourceAddress)
+        checksumData.append(self.destinationAddress)
+
+        if let optionsData = self.options
+        {
+            checksumData.append(optionsData.data)
+        }
+
+        if let paddingData = self.ethernetPadding
+        {
+            checksumData.append(paddingData.data)
+        }
+
+        if let checkresult = calculateChecksum(bytes: checksumData)
+        {
+            if let checksumNotNil = checksum
+            {
+                guard checksumNotNil == checkresult else
+                {
+                    print("Checksum mismatch \(checksumNotNil) != \(checkresult)")
+                    return nil
+                }
+            }
+
+            self.checksum = checkresult
         }
         else
         {
-            var checksumData: Data = Data()
-            
-            var verIHL: Bits = Bits()
-            let _ = verIHL.pack(bits: self.version)
-            let _ = verIHL.pack(bits: self.IHL)
-            checksumData.append(verIHL.data)
-            
-            var DSCPECN: Bits = Bits()
-            let _ = DSCPECN.pack(bits: self.DSCP)
-            let _ = DSCPECN.pack(bits: self.ECN)
-            checksumData.append(DSCPECN.data)
-            
-            checksumData.append(self.length.data)
-            checksumData.append(self.identification.data)
-            
-            var flagsFrags: Bits = Bits()
-            let _ = flagsFrags.pack(bool: self.reservedBit)
-            let _ = flagsFrags.pack(bool: self.dontFragment)
-            let _ = flagsFrags.pack(bool: self.moreFragments)
-            guard let fragmentOffsetBits = Bits(bytes: self.fragmentOffset, droppingFromLeft: 3) else
-            {
-                return nil
-            }
-            let _ = flagsFrags.pack(bits: fragmentOffsetBits)
-            checksumData.append(flagsFrags.data)
-            
-            checksumData.append(self.ttl.data)
-            checksumData.append(self.protocolNumber.rawValue)
-            checksumData.append(self.sourceAddress)
-            checksumData.append(self.destinationAddress)
-            
-            if let optionsData = self.options
-            {
-                checksumData.append(optionsData.data)
-            }
-            
-            if let paddingData = self.ethernetPadding
-            {
-                checksumData.append(paddingData.data)
-            }
-            
-            if let checkresult = calculateChecksum(bytes: checksumData)
-            {
-                self.checksum = checkresult
-            } else
-            {
-                return nil
-            }
+            return nil
         }
     }
     
-    var pseudoHeaderTCP: Data
+    func pseudoHeaderTCP(tcpLength: UInt16) -> Data
     {
         var results: Data = Data()
         let reservedZero: UInt8 = 0
@@ -338,14 +342,12 @@ extension IPv4
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
-        
-        let TCPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
-        results.append(TCPLen.data)
+        results.append(tcpLength.data)
         
         return results
     }
     
-    var pseudoHeaderUDP: Data
+    func pseudoHeaderUDP(udpLength: UInt16) -> Data
     {
         var results: Data = Data()
         let reservedZero: UInt8 = 0
@@ -353,9 +355,7 @@ extension IPv4
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
-        
-        let UDPLen = self.length - (self.IHL.maybeNetworkUint16! * 4)
-        results.append(UDPLen.data)
+        results.append(udpLength.data)
         
         return results
     }
@@ -387,10 +387,13 @@ extension IPv4
         }
         
         let length: UInt16
-        if let payload = payload {
-            length = UInt16(payload.count) + UInt16(IPv4.internetHeaderLengthNoOptions * 4)
-        } else {
-            length = UInt16(IPv4.internetHeaderLengthNoOptions)
+        if let payload = payload
+        {
+            length = UInt16(payload.count) + (UInt16(IPv4.internetHeaderLengthNoOptions) * 4)
+        }
+        else
+        {
+            length = UInt16(IPv4.internetHeaderLengthNoOptions) * 4 // internetHeaderLengthNoOptions is in 4 byte chunks
         }
         
         // see https://datatracker.ietf.org/doc/html/rfc6864

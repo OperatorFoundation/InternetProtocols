@@ -216,7 +216,7 @@ extension TCP
     public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: Data, acknowledgementNumber: Data,
                  offset: Bits, reserved: Bits, ns: Bool, cwr: Bool, ece: Bool, urg: Bool, ack: Bool, psh: Bool,
                  rst: Bool, syn: Bool, fin: Bool, windowSize: UInt16, checksum: UInt16?, urgentPointer: UInt16,
-                 options: Data?, payload: Data?, IPv4: IPv4)
+                 options: Data?, payload: Data?, ipv4: IPv4)
     {
         //FIX, add parameter validation code
         //write test functions for this initializer
@@ -247,12 +247,18 @@ extension TCP
         }
         else
         {
+            // pack all the tcp stuff and the pseudo header, then calculate the checksum
             var checksumData: Data = Data()
+
+            // TCPLen is the length of the header and the payload in bytes (represented as a 2 byte number)
+            // internetHeaderLengthNoOptions(in bytes) + optionsSize + payloadSize
+            let internetHeaderLengthNoOptionsInBytes = UInt16(IPv4.internetHeaderLengthNoOptions) * 4
+            let optionsSizeInBytes = UInt16(options?.count ?? 0)
+            let payloadSizeInBytes = UInt16(payload?.count ?? 0)
+            let tcpLength = internetHeaderLengthNoOptionsInBytes + optionsSizeInBytes + payloadSizeInBytes
             
-            let psuedoheader = IPv4.pseudoHeaderTCP
+            let psuedoheader = ipv4.pseudoHeaderTCP(tcpLength: tcpLength)
             
-            //pack all the tcp stuff and the psudo header, then calculate the checksum
-            //handle optionals
             checksumData.append(psuedoheader)
             checksumData.append(self.sourcePort.data)
             checksumData.append(self.destinationPort.data)
@@ -318,9 +324,8 @@ extension TCP
     public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil, ipv4: IPv4) throws
     {
         let reserved: Bits! = Bits(byte: 0, droppingFromLeft: 5)
-    
         
-        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: nil, urgentPointer: 0, options: nil, payload: payload, IPv4: ipv4)
+        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: nil, urgentPointer: 0, options: nil, payload: payload, ipv4: ipv4)
     }
 }
 
