@@ -50,7 +50,7 @@ class generatorTest: XCTestCase
         
         do
         {
-            let packet = try IPv4(sourceAddress: sourceAddress, destinationAddress: destinationAddress, sourcePort: 853, destinationPort: 50314, sequenceNumber: sequenceNumber, acknowledgementNumber: ackNumber, syn: false, ack: true, fin: false, rst: true, windowSize: 0, payload: nil)
+            let packet = try IPv4(sourceAddress: sourceAddress, destinationAddress: destinationAddress, sourcePort: 853, destinationPort: 50314, sequenceNumber: sequenceNumber, acknowledgementNumber: ackNumber, syn: false, ack: true, fin: false, rst: false, windowSize: 0, payload: nil)
             XCTAssertNotNil(packet)
         }
         catch
