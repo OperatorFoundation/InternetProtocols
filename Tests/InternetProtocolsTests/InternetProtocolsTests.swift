@@ -7,11 +7,12 @@
 
 import Foundation
 import XCTest
-import Datable
+
 import Bits
+import Datable
 //import SwiftPCAP
 @testable import InternetProtocols
-
+import SwiftHexTools
 
 extension String {
     var isHex: Bool {
@@ -1720,6 +1721,49 @@ final class ParserTests: XCTestCase
         XCTAssertEqual(constructedUDP.checksum, ourUDP.checksum)
         XCTAssertEqual(constructedUDP.payload, ourUDP.payload)
     }
-    
-    
+
+    public func testBadSynAck()
+    {
+        let syns: [String] = [
+            "4500003ca95f400040069b100a080002a45c47e6db1f08b91da9ff9a00000000a002fffff92d0000020405b40402080a00a556c50000000001030306",
+            "4500003ca960400040069b0f0a080002a45c47e6db1f08b91da9ff9a00000000a002fffff8c90000020405b40402080a00a557290000000001030306",
+            "4500003ca961400040069b0e0a080002a45c47e6db1f08b91da9ff9a00000000a002fffff8010000020405b40402080a00a557f10000000001030306",
+            "4500003ca962400040069b0d0a080002a45c47e6db1f08b91da9ff9a00000000a002fffff6700000020405b40402080a00a559820000000001030306",
+            "4500003ca963400040069b0c0a080002a45c47e6db1f08b91da9ff9a00000000a002fffff34a0000020405b40402080a00a55ca80000000001030306",
+            "4500003ca964400040069b0b0a080002a45c47e6db1f08b91da9ff9a00000000a002ffffed060000020405b40402080a00a562ec0000000001030306",
+            "4500003ca965400040069b0a0a080002a45c47e6db1f08b91da9ff9a00000000a002ffffe0820000020405b40402080a00a56f700000000001030306",
+        ]
+
+        let acks: [String] = [
+            "450000280bf900004006788b0a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "45000028b91900004006cb6a0a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "4500002822210000400662630a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "4500002880e500004006039f0a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "45000028b58e00004006cef50a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "4500002880a30000400603e10a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+            "45000028b0e200004006d3a10a080002a45c47e6db1f08b9000000001da9ff9b50140000b8660000",
+        ]
+
+        print("SYNs ----------------------------------------------")
+        for syn in syns
+        {
+            printHexPacket(syn)
+        }
+
+        print("ACKSs ----------------------------------------------")
+        for ack in acks
+        {
+            printHexPacket(ack)
+        }
+    }
+
+    func printHexPacket(_ string: String)
+    {
+        guard let data = Data(hex: string) else
+        {
+            return
+        }
+
+        let packet = Packet(ipv4Bytes: data, timestamp: Date(), debugPrints: true)
+    }
 }
