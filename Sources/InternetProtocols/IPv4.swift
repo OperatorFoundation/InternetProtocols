@@ -272,60 +272,64 @@ extension IPv4
         self.payload = payload
         self.ethernetPadding = ethernetPadding
         
-        if let checksumNotNil = checksum
+        var checksumData: Data = Data()
+
+        var verIHL: Bits = Bits()
+        let _ = verIHL.pack(bits: self.version)
+        let _ = verIHL.pack(bits: self.IHL)
+        checksumData.append(verIHL.data)
+
+        var DSCPECN: Bits = Bits()
+        let _ = DSCPECN.pack(bits: self.DSCP)
+        let _ = DSCPECN.pack(bits: self.ECN)
+        checksumData.append(DSCPECN.data)
+
+        checksumData.append(self.length.data)
+        checksumData.append(self.identification.data)
+
+        var flagsFrags: Bits = Bits()
+        let _ = flagsFrags.pack(bool: self.reservedBit)
+        let _ = flagsFrags.pack(bool: self.dontFragment)
+        let _ = flagsFrags.pack(bool: self.moreFragments)
+        guard let fragmentOffsetBits = Bits(bytes: self.fragmentOffset, droppingFromLeft: 3) else
         {
-            self.checksum = checksumNotNil
+            return nil
+        }
+
+        let _ = flagsFrags.pack(bits: fragmentOffsetBits)
+        checksumData.append(flagsFrags.data)
+
+        checksumData.append(self.ttl.data)
+        checksumData.append(self.protocolNumber.rawValue)
+        checksumData.append(self.sourceAddress)
+        checksumData.append(self.destinationAddress)
+
+        if let optionsData = self.options
+        {
+            checksumData.append(optionsData.data)
+        }
+
+        if let paddingData = self.ethernetPadding
+        {
+            checksumData.append(paddingData.data)
+        }
+
+        if let checkresult = calculateChecksum(bytes: checksumData)
+        {
+            if let checksumNotNil = checksum
+            {
+                guard checksumNotNil == checkresult else
+                {
+                    print("Checksum mismatch \(checksumNotNil) != \(checkresult)")
+                    return nil
+                }
+            }
+
+            self.checksum = checkresult
         }
         else
         {
-            var checksumData: Data = Data()
-            
-            var verIHL: Bits = Bits()
-            let _ = verIHL.pack(bits: self.version)
-            let _ = verIHL.pack(bits: self.IHL)
-            checksumData.append(verIHL.data)
-            
-            var DSCPECN: Bits = Bits()
-            let _ = DSCPECN.pack(bits: self.DSCP)
-            let _ = DSCPECN.pack(bits: self.ECN)
-            checksumData.append(DSCPECN.data)
-            
-            checksumData.append(self.length.data)
-            checksumData.append(self.identification.data)
-            
-            var flagsFrags: Bits = Bits()
-            let _ = flagsFrags.pack(bool: self.reservedBit)
-            let _ = flagsFrags.pack(bool: self.dontFragment)
-            let _ = flagsFrags.pack(bool: self.moreFragments)
-            guard let fragmentOffsetBits = Bits(bytes: self.fragmentOffset, droppingFromLeft: 3) else
-            {
-                return nil
-            }
-            let _ = flagsFrags.pack(bits: fragmentOffsetBits)
-            checksumData.append(flagsFrags.data)
-            
-            checksumData.append(self.ttl.data)
-            checksumData.append(self.protocolNumber.rawValue)
-            checksumData.append(self.sourceAddress)
-            checksumData.append(self.destinationAddress)
-            
-            if let optionsData = self.options
-            {
-                checksumData.append(optionsData.data)
-            }
-            
-            if let paddingData = self.ethernetPadding
-            {
-                checksumData.append(paddingData.data)
-            }
-            
-            if let checkresult = calculateChecksum(bytes: checksumData)
-            {
-                self.checksum = checkresult
-            } else
-            {
-                return nil
-            }
+            return nil
         }
     }
     
