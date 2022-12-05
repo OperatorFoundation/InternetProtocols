@@ -29,7 +29,7 @@ public struct TCP: Codable
     public let syn: Bool //1 bit
     public let fin: Bool //1 bit
     public let windowSize: UInt16 //2 bytes
-    public let checksum: UInt16 //2 bytes
+    public var checksum: UInt16 = 0 //2 bytes
     public let urgentPointer: UInt16 //2 bytes
     public let options: Data?
     public let payload: Data?
@@ -247,50 +247,7 @@ extension TCP
         }
         else
         {
-            // pack all the tcp stuff and the pseudo header, then calculate the checksum
-            var checksumData: Data = Data()
-
-            // TCPLen is the length of the header and the payload in bytes (represented as a 2 byte number)
-            // internetHeaderLengthNoOptions(in bytes) + optionsSize + payloadSize
-            let internetHeaderLengthNoOptionsInBytes = UInt16(IPv4.internetHeaderLengthNoOptions) * 4
-            let optionsSizeInBytes = UInt16(options?.count ?? 0)
-            let payloadSizeInBytes = UInt16(payload?.count ?? 0)
-            let tcpLength = internetHeaderLengthNoOptionsInBytes + optionsSizeInBytes + payloadSizeInBytes
-            
-            let psuedoheader = ipv4.pseudoHeaderTCP(tcpLength: tcpLength)
-            
-            checksumData.append(psuedoheader)
-            checksumData.append(self.sourcePort.data)
-            checksumData.append(self.destinationPort.data)
-            checksumData.append(self.sequenceNumber)
-            checksumData.append(self.acknowledgementNumber)
-            var offsetReservedFlags: Bits = Bits()
-            let _ = offsetReservedFlags.pack(bits: self.offset)
-            let _ = offsetReservedFlags.pack(bits: self.reserved)
-            let _ = offsetReservedFlags.pack(bool: self.ns)
-            let _ = offsetReservedFlags.pack(bool: self.cwr)
-            let _ = offsetReservedFlags.pack(bool: self.ece)
-            let _ = offsetReservedFlags.pack(bool: self.urg)
-            let _ = offsetReservedFlags.pack(bool: self.ack)
-            let _ = offsetReservedFlags.pack(bool: self.psh)
-            let _ = offsetReservedFlags.pack(bool: self.rst)
-            let _ = offsetReservedFlags.pack(bool: self.syn)
-            let _ = offsetReservedFlags.pack(bool: self.fin)
-            
-            checksumData.append(offsetReservedFlags.data)
-            checksumData.append(self.windowSize.data)
-            
-            checksumData.append(self.urgentPointer.data)
-            
-            if let optionsData = self.options
-            {
-                checksumData.append(optionsData.data)
-            }
-            
-            if let payloadData = self.payload
-            {
-                checksumData.append(payloadData)
-            }
+            let checksumData = TCP.makeChecksumBytes(ipv4: ipv4, tcp: self)
             
             if let checkresult = calculateChecksum(bytes: checksumData)
             {
@@ -305,7 +262,55 @@ extension TCP
         
     }
     
-    
+    static public func makeChecksumBytes(ipv4: IPv4, tcp: TCP) -> Data
+    {
+        // pack all the tcp stuff and the pseudo header, then calculate the checksum
+        var checksumData: Data = Data()
+
+        // TCPLen is the length of the header and the payload in bytes (represented as a 2 byte number)
+        // internetHeaderLengthNoOptions(in bytes) + optionsSize + payloadSize
+        let internetHeaderLengthNoOptionsInBytes = UInt16(IPv4.internetHeaderLengthNoOptions) * 4
+        let optionsSizeInBytes = UInt16(tcp.options?.count ?? 0)
+        let payloadSizeInBytes = UInt16(tcp.payload?.count ?? 0)
+        let tcpLength = internetHeaderLengthNoOptionsInBytes + optionsSizeInBytes + payloadSizeInBytes
+        
+        let psuedoheader = ipv4.pseudoHeaderTCP(tcpLength: tcpLength)
+        
+        checksumData.append(psuedoheader)
+        checksumData.append(tcp.sourcePort.data)
+        checksumData.append(tcp.destinationPort.data)
+        checksumData.append(tcp.sequenceNumber)
+        checksumData.append(tcp.acknowledgementNumber)
+        var offsetReservedFlags: Bits = Bits()
+        let _ = offsetReservedFlags.pack(bits: tcp.offset)
+        let _ = offsetReservedFlags.pack(bits: tcp.reserved)
+        let _ = offsetReservedFlags.pack(bool: tcp.ns)
+        let _ = offsetReservedFlags.pack(bool: tcp.cwr)
+        let _ = offsetReservedFlags.pack(bool: tcp.ece)
+        let _ = offsetReservedFlags.pack(bool: tcp.urg)
+        let _ = offsetReservedFlags.pack(bool: tcp.ack)
+        let _ = offsetReservedFlags.pack(bool: tcp.psh)
+        let _ = offsetReservedFlags.pack(bool: tcp.rst)
+        let _ = offsetReservedFlags.pack(bool: tcp.syn)
+        let _ = offsetReservedFlags.pack(bool: tcp.fin)
+        
+        checksumData.append(offsetReservedFlags.data)
+        checksumData.append(tcp.windowSize.data)
+        
+        checksumData.append(tcp.urgentPointer.data)
+        
+        if let optionsData = tcp.options
+        {
+            checksumData.append(optionsData.data)
+        }
+        
+        if let payloadData = tcp.payload
+        {
+            checksumData.append(payloadData)
+        }
+        
+        return checksumData
+    }
 }
 
 extension TCP

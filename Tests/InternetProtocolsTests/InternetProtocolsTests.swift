@@ -25,6 +25,69 @@ extension String {
 
 class generatorTest: XCTestCase
 {
+    func testCheckSum()
+    {
+        let packetHex = "4500004000004000400600007f0000017f000001d0d10d056918af9600000000b002fffffe34000002043fd8010303060101080a6a5eece00000000004020000"
+        guard let packetData = Data(hex: packetHex) else
+        {
+            XCTFail()
+            return
+        }
+        
+        let date = Date()
+        let packet = Packet(ipv4Bytes: packetData, timestamp: date, debugPrints: false)
+        guard let tcp = packet.tcp else {
+            XCTFail()
+            return
+        }
+        
+        guard let ipv4 = packet.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let newPacket = IPv4(version: ipv4.version, IHL: ipv4.IHL, DSCP: ipv4.DSCP, ECN: ipv4.ECN, length: ipv4.length, identification: ipv4.identification, reservedBit: ipv4.reservedBit, dontFragment: ipv4.dontFragment, moreFragments: ipv4.moreFragments, fragmentOffset: ipv4.fragmentOffset, ttl: ipv4.ttl, protocolNumber: ipv4.protocolNumber, checksum: nil, sourceAddress: ipv4.sourceAddress, destinationAddress: ipv4.destinationAddress, options: ipv4.options, payload: ipv4.payload, ethernetPadding: ipv4.ethernetPadding) else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let newTcp = TCP(sourcePort: tcp.sourcePort, destinationPort: tcp.destinationPort, sequenceNumber: tcp.sequenceNumber, acknowledgementNumber: tcp.acknowledgementNumber, offset: tcp.offset, reserved: tcp.reserved, ns: tcp.ns, cwr: tcp.cwr, ece: tcp.ece, urg: tcp.urg, ack: tcp.ack, psh: tcp.psh, rst: tcp.rst, syn: tcp.syn, fin: tcp.fin, windowSize: tcp.windowSize, checksum: nil, urgentPointer: tcp.urgentPointer, options: tcp.options, payload: tcp.payload, ipv4: newPacket) else
+        {
+            XCTFail()
+            return
+        }
+        
+        let firstChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: tcp)
+        let newChecksumBytes = TCP.makeChecksumBytes(ipv4: newPacket, tcp: newTcp)
+        print(firstChecksumBytes.hex)
+        print(newChecksumBytes.hex)
+        XCTAssertEqual(firstChecksumBytes.hex, newChecksumBytes.hex)
+        
+        let firstChecksum = tcp.checksum
+        let newChecksum = newTcp.checksum
+        XCTAssertEqual(firstChecksum.data.hex, newChecksum.data.hex)
+    }
+    
+    func testChecksumGeneration() {
+        let checksumHex = "7f0000017f0000010006002cd0d10d056918af9600000000b002ffff000002043fd8010303060101080a6a5eece00000000004020000"
+        let correct = Data(hex: "fe34")!.maybeNetworkUint16
+        guard let checksumData = Data(hex: checksumHex) else
+        {
+            XCTFail()
+            return
+        }
+        
+        guard let result = calculateChecksum(bytes: checksumData) else
+        {
+            XCTFail()
+            return
+        }
+        
+        XCTAssertEqual(correct, result)
+    }
+    
     func testIPv4PacketGenerator()
     {
         // * sourceAddress: IPv4Address(address: "8.8.8.8", rawValue: 4 bytes)
