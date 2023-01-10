@@ -35,18 +35,21 @@ class generatorTest: XCTestCase
         }
         
         let date = Date()
-        let packet = Packet(ipv4Bytes: packetData, timestamp: date, debugPrints: false)
-        guard let tcp = packet.tcp else {
-            XCTFail()
-            return
-        }
-        
+        let packet = Packet(ipv4Bytes: packetData, timestamp: date, debugPrints: true)
+
         guard let ipv4 = packet.ipv4 else
         {
             XCTFail()
             return
         }
-        
+
+        guard let tcp = packet.tcp else {
+            XCTFail()
+            return
+        }
+
+        XCTAssert(tcp.checkChecksum(ipv4: ipv4))
+
         guard let newPacket = IPv4(version: ipv4.version, IHL: ipv4.IHL, DSCP: ipv4.DSCP, ECN: ipv4.ECN, length: ipv4.length, identification: ipv4.identification, reservedBit: ipv4.reservedBit, dontFragment: ipv4.dontFragment, moreFragments: ipv4.moreFragments, fragmentOffset: ipv4.fragmentOffset, ttl: ipv4.ttl, protocolNumber: ipv4.protocolNumber, checksum: nil, sourceAddress: ipv4.sourceAddress, destinationAddress: ipv4.destinationAddress, options: ipv4.options, payload: ipv4.payload, ethernetPadding: ipv4.ethernetPadding) else
         {
             XCTFail()
@@ -58,16 +61,169 @@ class generatorTest: XCTestCase
             XCTFail()
             return
         }
-        
+
+        print("total packet length: \(Data(hex: packetHex)!.count)")
+        print("ipv4 length: \(ipv4.length)")
+        print("ipv4 payload length: \(ipv4.payload!.count)")
+        if let payload = tcp.payload
+        {
+            print("tcp payload length: \(payload.count)")
+        }
+        else
+        {
+            print("no tcp payload")
+        }
+        print(tcp)
+
         let firstChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: tcp)
         let newChecksumBytes = TCP.makeChecksumBytes(ipv4: newPacket, tcp: newTcp)
-        print(firstChecksumBytes.hex)
-        print(newChecksumBytes.hex)
         XCTAssertEqual(firstChecksumBytes.hex, newChecksumBytes.hex)
         
         let firstChecksum = tcp.checksum
         let newChecksum = newTcp.checksum
         XCTAssertEqual(firstChecksum.data.hex, newChecksum.data.hex)
+    }
+
+    func testChecksumScapy()
+    {
+        let packetHex = "4500002800010000400660a30a00001d0808080800140035000000000000000050022000756d0000"
+        guard let packetData = Data(hex: packetHex) else
+        {
+            XCTFail()
+            return
+        }
+
+        let date = Date()
+        let packet = Packet(ipv4Bytes: packetData, timestamp: date, debugPrints: false)
+
+        guard let ipv4 = packet.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+
+        guard let tcp = packet.tcp else {
+            XCTFail()
+            return
+        }
+
+        XCTAssert(tcp.checkChecksum(ipv4: ipv4))
+
+        guard let newPacket = IPv4(version: ipv4.version, IHL: ipv4.IHL, DSCP: ipv4.DSCP, ECN: ipv4.ECN, length: ipv4.length, identification: ipv4.identification, reservedBit: ipv4.reservedBit, dontFragment: ipv4.dontFragment, moreFragments: ipv4.moreFragments, fragmentOffset: ipv4.fragmentOffset, ttl: ipv4.ttl, protocolNumber: ipv4.protocolNumber, checksum: nil, sourceAddress: ipv4.sourceAddress, destinationAddress: ipv4.destinationAddress, options: ipv4.options, payload: ipv4.payload, ethernetPadding: ipv4.ethernetPadding) else
+        {
+            XCTFail()
+            return
+        }
+
+        guard let newTcp = TCP(sourcePort: tcp.sourcePort, destinationPort: tcp.destinationPort, sequenceNumber: tcp.sequenceNumber, acknowledgementNumber: tcp.acknowledgementNumber, offset: tcp.offset, reserved: tcp.reserved, ns: tcp.ns, cwr: tcp.cwr, ece: tcp.ece, urg: tcp.urg, ack: tcp.ack, psh: tcp.psh, rst: tcp.rst, syn: tcp.syn, fin: tcp.fin, windowSize: tcp.windowSize, checksum: nil, urgentPointer: tcp.urgentPointer, options: tcp.options, payload: tcp.payload, ipv4: newPacket) else
+        {
+            XCTFail()
+            return
+        }
+
+        print("total packet length: \(Data(hex: packetHex)!.count)")
+        print("ipv4 length: \(ipv4.length)")
+        print("ipv4 payload length: \(ipv4.payload!.count)")
+        if let payload = tcp.payload
+        {
+            print("tcp payload length: \(payload.count)")
+        }
+        else
+        {
+            print("no tcp payload")
+        }
+        print(tcp)
+
+        let firstChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: tcp)
+        let newChecksumBytes = TCP.makeChecksumBytes(ipv4: newPacket, tcp: newTcp)
+        XCTAssertEqual(firstChecksumBytes.hex, newChecksumBytes.hex)
+
+        let firstChecksum = tcp.checksum
+        let newChecksum = newTcp.checksum
+        print(firstChecksum.data.hex)
+        print(newChecksum.data.hex)
+        XCTAssertEqual(firstChecksum.data.hex, newChecksum.data.hex)
+    }
+
+    func testChecksumScapy2()
+    {
+        let packetHex = "4500002c000100004006609f0a00001d08080808001400350000000000000000600220006469000001000000"
+        guard let packetData = Data(hex: packetHex) else
+        {
+            XCTFail()
+            return
+        }
+
+        let date = Date()
+        let packet = Packet(ipv4Bytes: packetData, timestamp: date, debugPrints: false)
+
+        guard let ipv4 = packet.ipv4 else
+        {
+            XCTFail()
+            return
+        }
+
+        guard let tcp = packet.tcp else {
+            XCTFail()
+            return
+        }
+
+        XCTAssert(tcp.checkChecksum(ipv4: ipv4))
+
+        guard let newPacket = IPv4(version: ipv4.version, IHL: ipv4.IHL, DSCP: ipv4.DSCP, ECN: ipv4.ECN, length: ipv4.length, identification: ipv4.identification, reservedBit: ipv4.reservedBit, dontFragment: ipv4.dontFragment, moreFragments: ipv4.moreFragments, fragmentOffset: ipv4.fragmentOffset, ttl: ipv4.ttl, protocolNumber: ipv4.protocolNumber, checksum: nil, sourceAddress: ipv4.sourceAddress, destinationAddress: ipv4.destinationAddress, options: ipv4.options, payload: ipv4.payload, ethernetPadding: ipv4.ethernetPadding) else
+        {
+            XCTFail()
+            return
+        }
+
+        guard let newTcp = TCP(sourcePort: tcp.sourcePort, destinationPort: tcp.destinationPort, sequenceNumber: tcp.sequenceNumber, acknowledgementNumber: tcp.acknowledgementNumber, offset: tcp.offset, reserved: tcp.reserved, ns: tcp.ns, cwr: tcp.cwr, ece: tcp.ece, urg: tcp.urg, ack: tcp.ack, psh: tcp.psh, rst: tcp.rst, syn: tcp.syn, fin: tcp.fin, windowSize: tcp.windowSize, checksum: nil, urgentPointer: tcp.urgentPointer, options: tcp.options, payload: tcp.payload, ipv4: newPacket) else
+        {
+            XCTFail()
+            return
+        }
+
+        print("total packet length: \(Data(hex: packetHex)!.count)")
+        print("ipv4 length: \(ipv4.length)")
+        print("ipv4 payload length: \(ipv4.payload!.count)")
+        if let payload = tcp.payload
+        {
+            print("tcp payload length: \(payload.count)")
+        }
+        else
+        {
+            print("no tcp payload")
+        }
+        print(tcp)
+
+        let firstChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: tcp)
+        let newChecksumBytes = TCP.makeChecksumBytes(ipv4: newPacket, tcp: newTcp)
+        XCTAssertEqual(firstChecksumBytes.hex, newChecksumBytes.hex)
+
+        let firstChecksum = tcp.checksum
+        let newChecksum = newTcp.checksum
+        print(firstChecksum.data.hex)
+        print(newChecksum.data.hex)
+        XCTAssertEqual(firstChecksum.data.hex, newChecksum.data.hex)
+    }
+    func testChecksumCalculation()
+    {
+        let correct = "b861"
+        let input = "45000073000040004011c0a80001c0a800c7"
+        let sum: UInt32 = 0x4500 + 0x0073 + 0x0000 + 0x4000 + 0x4011 + 0xc0a8 + 0x0001 + 0xc0a8 + 0x00c7
+        let sumBytes = sum.maybeNetworkData!
+        print(sumBytes.hex)
+
+        var left = sum >> 16
+        var right = (sum << 16) >> 16
+        let partialResult = left + right
+        left = partialResult >> 16
+        right = (partialResult << 16) >> 16
+        let result = ~(UInt16(left) + UInt16(right))
+
+        XCTAssertEqual(result.maybeNetworkData!.hex, correct)
+
+        let calculated = calculateChecksum(bytes: Data(hex: input)!)
+        XCTAssertEqual(calculated!.maybeNetworkData!.hex, correct)
     }
     
     func testChecksumGeneration() {

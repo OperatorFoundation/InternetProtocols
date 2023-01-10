@@ -5,10 +5,12 @@
 //  Created by Dr. Brandon Wiley on 3/9/20.
 //
 
+import Foundation
+
 import Bits
 import Datable
-import Foundation
 import Net
+import SwiftHexTools
 
 public var debugPrint: Bool = false
 
@@ -77,6 +79,9 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     // ref https://tools.ietf.org/html/rfc793#page-16 //TCP
     // ref https://tools.ietf.org/html/rfc768 //UDP
     // note when sending UDP packet, the checksum is optional and is indicated as not being calculated when 0x0000 is sent, so if sending wiht a checksum and the calculated checksum = 0x0000 then you must send 0xFFFF or things will think it was not calculated
+
+    print("calculateChecksum(\(bytes.hex))")
+    print("pseudoheader size: \(bytes.count)")
     
     var sum: UInt32 = 0 //0xFFFF + 0xFFFF = 0x1FFFE which is more than a UInt16 can hold
     
@@ -90,18 +95,35 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     for i in 0..<(ourBytes.count/2) //2 bytes at a time
     {
         let twoBytes = ourBytes.subdata( in: (i*2)..<(i*2+2) )
+
+        print("Adding \(twoBytes.hex)")
         
         guard let value = twoBytes.maybeNetworkUint16 else { return nil } //convert bytes to number value
         
         sum += UInt32(value) //add number value to sum
-        if sum > 0xFFFF //handle carry by subtracting 0xFFFF
-        {
-            sum -= 0xFFFF
-        }
     }
-    let checksum = ~UInt16(sum) //one's compliment of sum returned as 2 bytes (UInt16)
-    
-    return checksum
+
+    print("sum: \(sum.maybeNetworkData!.hex)")
+
+    var left = (sum >> 16) & 0xFFFF
+    var right = sum & 0xFFFF
+
+    print("left: \(left.maybeNetworkData!.hex)")
+    print("right: \(right.maybeNetworkData!.hex)")
+
+    let partialResult = left + right
+    left = (partialResult >> 16) & 0xFFFF
+    right = partialResult & 0xFFFF
+
+    print("partialResult: \(partialResult.maybeNetworkData!.hex)")
+    print("left: \(left.maybeNetworkData!.hex)")
+    print("right: \(right.maybeNetworkData!.hex)")
+
+    let result = UInt16(left) + UInt16(right)
+
+    print("result: \(result.maybeNetworkData!.hex) \((~result).maybeNetworkData!.hex)")
+
+    return ~result // one's complement
 }
 
 public struct Packet: Codable

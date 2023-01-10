@@ -1,14 +1,16 @@
 //
-//  File.swift
+//  IPv4.swift
 //  
 //
 //  Created by Joshua Clark on 3/11/22.
 //
 
+import Foundation
+
 import Bits
 import Datable
-import Foundation
 import Net
+import SwiftHexTools
 
 public struct IPv4: Codable
 {
@@ -337,12 +339,19 @@ extension IPv4
     {
         var results: Data = Data()
         let reservedZero: UInt8 = 0
-        
+
+        print("pseudoHeaderTCP")
+        print("source address: \(self.sourceAddress.count) bytes - \(self.sourceAddress.hex)")
+        print("destination address: \(self.destinationAddress.count) bytes - \(self.destinationAddress.hex)")
+        print("reserved: \(reservedZero.data.count) bytes - \(reservedZero.data.hex)")
+        print("protocolNumber: \(self.protocolNumber.rawValue.data.count) bytes - \(self.protocolNumber.rawValue.data.hex) (\(self.protocolNumber))")
+        print("tcpLength: \(tcpLength.data.count) bytes - \(tcpLength.data.hex) (\(tcpLength))")
+
         results.append(self.sourceAddress)
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
         results.append(self.protocolNumber.rawValue)
-        results.append(tcpLength.data)
+        results.append(tcpLength.maybeNetworkData!)
         
         return results
     }

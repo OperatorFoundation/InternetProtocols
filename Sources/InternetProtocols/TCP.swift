@@ -132,7 +132,7 @@ extension TCP: MaybeDatable
         guard let checksumUint16 = checksum.maybeNetworkUint16 else { return nil }
         self.checksum = checksumUint16
         if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum) + " - 0d" + String(format: "%u", self.checksum)) }
-        
+
         guard let urgentPointer = bits.unpack(bytes: 2) else { return nil }
         guard let urgentPointerUint16 = urgentPointer.maybeNetworkUint16 else { return nil }
         self.urgentPointer = urgentPointerUint16
@@ -172,6 +172,14 @@ extension TCP: MaybeDatable
             if debugPrint { print("・ TCP payload: nil\n") }
             self.payload = nil
         }
+    }
+
+    public func checkChecksum(ipv4: IPv4) -> Bool
+    {
+        let calculatedChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: self, includeChecksum: false)
+        let calculatedChecksum = calculateChecksum(bytes: calculatedChecksumBytes)
+
+        return self.checksum == calculatedChecksum
     }
     
     public var data: Data
@@ -244,6 +252,15 @@ extension TCP
         if let checksumNonNil = checksum //if checksum is nil then calculate it otherwise use the checksum passed
         {
             self.checksum = checksumNonNil
+
+            let calculatedChecksumBytes = TCP.makeChecksumBytes(ipv4: ipv4, tcp: self, includeChecksum: true)
+            let calculatedChecksum = calculateChecksum(bytes: calculatedChecksumBytes)
+
+            // Double check checksum
+            guard checksumNonNil == calculatedChecksum else
+            {
+                return nil
+            }
         }
         else
         {
@@ -262,7 +279,7 @@ extension TCP
         
     }
     
-    static public func makeChecksumBytes(ipv4: IPv4, tcp: TCP) -> Data
+    static public func makeChecksumBytes(ipv4: IPv4, tcp: TCP, includeChecksum: Bool = false) -> Data
     {
         // pack all the tcp stuff and the pseudo header, then calculate the checksum
         var checksumData: Data = Data()
@@ -275,10 +292,10 @@ extension TCP
         let tcpLength = internetHeaderLengthNoOptionsInBytes + optionsSizeInBytes + payloadSizeInBytes
         
         let psuedoheader = ipv4.pseudoHeaderTCP(tcpLength: tcpLength)
-        
+
         checksumData.append(psuedoheader)
-        checksumData.append(tcp.sourcePort.data)
-        checksumData.append(tcp.destinationPort.data)
+        checksumData.append(tcp.sourcePort.maybeNetworkData!)
+        checksumData.append(tcp.destinationPort.maybeNetworkData!)
         checksumData.append(tcp.sequenceNumber)
         checksumData.append(tcp.acknowledgementNumber)
         var offsetReservedFlags: Bits = Bits()
@@ -295,9 +312,14 @@ extension TCP
         let _ = offsetReservedFlags.pack(bool: tcp.fin)
         
         checksumData.append(offsetReservedFlags.data)
-        checksumData.append(tcp.windowSize.data)
+        checksumData.append(tcp.windowSize.maybeNetworkData!)
+
+        if includeChecksum
+        {
+            checksumData.append(tcp.checksum.maybeNetworkData!)
+        }
         
-        checksumData.append(tcp.urgentPointer.data)
+        checksumData.append(tcp.urgentPointer.maybeNetworkData!)
         
         if let optionsData = tcp.options
         {
@@ -307,6 +329,33 @@ extension TCP
         if let payloadData = tcp.payload
         {
             checksumData.append(payloadData)
+        }
+
+        print("pseudoheader: \(psuedoheader.count)")
+        print("source port: \(tcp.sourcePort.maybeNetworkData!.count)")
+        print("destination port: \(tcp.destinationPort.maybeNetworkData!.count)")
+        print("sequence number: \(tcp.sequenceNumber.count)")
+        print("acknowledgement number: \(tcp.acknowledgementNumber.count)")
+        print("offset, reserved, flags: \(offsetReservedFlags.data.count)")
+        print("window size: \(tcp.windowSize.maybeNetworkData!.count)")
+        print("urgent: \(tcp.urgentPointer.maybeNetworkData!.count)")
+
+        if let optionsData = tcp.options
+        {
+            print("options: \(optionsData.data.count)")
+        }
+        else
+        {
+            print("no options")
+        }
+
+        if let payloadData = tcp.payload
+        {
+            print("payload: \(payloadData.count)")
+        }
+        else
+        {
+            print("no payload")
         }
         
         return checksumData
