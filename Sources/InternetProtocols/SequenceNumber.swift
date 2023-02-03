@@ -8,7 +8,7 @@
 import Datable
 import Foundation
 
-public struct SequenceNumber: Equatable, Comparable, Datable
+public struct SequenceNumber: Equatable, Comparable, Datable, CustomStringConvertible, CustomDebugStringConvertible
 {
     static public let max: SequenceNumber = SequenceNumber(UInt32.max - 1)
 
@@ -39,6 +39,17 @@ public struct SequenceNumber: Equatable, Comparable, Datable
     }
 
     public let uint32: UInt32
+    
+    public var description: String
+    {
+        return "\(uint32)"
+    }
+    
+    public var debugDescription: String
+    {
+        return "\(uint32)"
+    }
+    
     public var data: Data {
         return self.uint32.maybeNetworkData!
     }
