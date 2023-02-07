@@ -393,11 +393,8 @@ extension TCP: CustomStringConvertible
         returnString += "Source Port: " + self.sourcePort.string + "\n"
         returnString += "Destination Port: " + self.destinationPort.string + "\n"
         
-        returnString += "Sequence Number: "
-        returnString += printDataBytes(bytes: sequenceNumber.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false) + "\n"
-        
-        returnString += "Acknowledgement Number: "
-        returnString += printDataBytes(bytes: acknowledgementNumber.data, hexDumpFormat: false, seperator: " ", decimal: false, enablePrinting: false) + "\n"
+        returnString += "Sequence Number: \(sequenceNumber.uint32 ?? 0)\n"
+        returnString += "Acknowledgement Number: \(acknowledgementNumber.uint32 ?? 0)\n"
         
         guard let offsetUint8 = offset.maybeNetworkUint8 else { return "Error converting offset" }
         returnString += "Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2) + "\n"
@@ -414,7 +411,7 @@ extension TCP: CustomStringConvertible
         returnString += "RST: " + String(self.rst) + "\n"
         returnString += "SYN: " + String(self.syn) + "\n"
         returnString += "FIN: " + String(self.fin) + "\n"
-        returnString += "Window Size: 0x" + String(format: "%04x", self.windowSize) + " - 0d" + self.windowSize.string + "\n"
+        returnString += "Window Size: \(windowSize)\n"
         returnString += "Checksum: 0x" + String(format: "%04x", self.checksum) + " - 0d" + self.checksum.string + "\n"
         returnString += "Urgent Pointer: 0x" + String(format: "%04x", self.urgentPointer) + " - 0d" + self.urgentPointer.string + "\n"
         
@@ -430,7 +427,7 @@ extension TCP: CustomStringConvertible
         
         if let payload = self.payload
         {
-            returnString += "Payload: "
+            returnString += "Payload (\(self.payload?.count ?? 0) bytes): "
             returnString += printDataBytes(bytes: payload.data, hexDumpFormat: true, seperator: " ", decimal: false, enablePrinting: false) + "\n"
         }
         else
