@@ -23,7 +23,7 @@ let package = Package(
     targets: [
         .target(
             name: "InternetProtocols",
-            dependencies: ["Bits", "Datable", "Net"]),
+            dependencies: ["Bits", "Datable", "Net", "SwiftHexTools"]),
         .testTarget(
             name: "InternetProtocolsTests",
             dependencies: ["InternetProtocols", "SwiftHexTools"])
