@@ -49,12 +49,14 @@ extension TCP: MaybeDatable
         guard let sourcePort = bits.unpack(bytes: 2) else { return nil }
         guard let sourcePortUint16 = sourcePort.maybeNetworkUint16 else { return nil }
         self.sourcePort = sourcePortUint16
-        if debugPrint { print("・ sourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - 0d" + String(format: "%u", self.sourcePort)) }
+        if debugPrint
+        { print("・ sourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - \(self.sourcePort)" )
+        }
         
         guard let destinationPort = bits.unpack(bytes: 2) else { return nil }
         guard let destinationPortUint16 = destinationPort.maybeNetworkUint16 else { return nil }
         self.destinationPort = destinationPortUint16
-        if debugPrint { print("・ destPort: 0x" + String(format: "%02x", self.destinationPort) + " - 0d" + String(format: "%u", self.destinationPort)) }
+        if debugPrint { print("・ destPort: 0x" + String(format: "%02x", self.destinationPort) + " -  \(self.destinationPort)") }
         
         guard let sequenceNumber = bits.unpack(bytes: 4) else { return nil }
         self.sequenceNumber = sequenceNumber.data
@@ -331,31 +333,32 @@ extension TCP
             checksumData.append(payloadData)
         }
 
-        print("pseudoheader: \(psuedoheader.count)")
-        print("source port: \(tcp.sourcePort.maybeNetworkData!.count)")
-        print("destination port: \(tcp.destinationPort.maybeNetworkData!.count)")
-        print("sequence number: \(tcp.sequenceNumber.count)")
-        print("acknowledgement number: \(tcp.acknowledgementNumber.count)")
-        print("offset, reserved, flags: \(offsetReservedFlags.data.count)")
-        print("window size: \(tcp.windowSize.maybeNetworkData!.count)")
-        print("urgent: \(tcp.urgentPointer.maybeNetworkData!.count)")
+//        print("\n@ Making checksum bytes:")
+//        print("@ pseudoheader: \(psuedoheader.count)")
+//        print("@ source port: \(tcp.sourcePort.maybeNetworkData!.count)")
+//        print("@ destination port: \(tcp.destinationPort.maybeNetworkData!.count)")
+//        print("@ sequence number: \(tcp.sequenceNumber.count)")
+//        print("@ acknowledgement number: \(tcp.acknowledgementNumber.count)")
+//        print("@ offset, reserved, flags: \(offsetReservedFlags.data.count)")
+//        print("@ window size: \(tcp.windowSize.maybeNetworkData!.count)")
+//        print("@ urgent: \(tcp.urgentPointer.maybeNetworkData!.count)")
 
         if let optionsData = tcp.options
         {
-            print("options: \(optionsData.data.count)")
+//            print("@ options: \(optionsData.data.count)")
         }
         else
         {
-            print("no options")
+//            print("@ no options")
         }
 
         if let payloadData = tcp.payload
         {
-            print("payload: \(payloadData.count)")
+//            print("@ payload: \(payloadData.count)")
         }
         else
         {
-            print("no payload")
+//            print("@ no payload")
         }
         
         return checksumData
