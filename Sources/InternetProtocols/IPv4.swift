@@ -42,7 +42,7 @@ extension IPv4: MaybeDatable
 {
     public init?(data: Data)
     {
-        if debugPrint { print("・ start parsing IPv4") }
+        if debugPrint { print("\n・ InternetProtocols start parsing IPv4") }
         var bits = Bits(data: data)
         
         //unpack a byte then parse into bits
