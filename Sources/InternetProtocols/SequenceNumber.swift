@@ -103,6 +103,18 @@ public struct SequenceNumber: Equatable, Comparable, Datable, CustomStringConver
 
         return SequenceNumber(newUint32)
     }
-    
-    
+
+    public func decrement() -> SequenceNumber
+    {
+       if self.uint32 == 0
+       {
+         return SequenceNumber(UInt32.max)
+       }
+       else
+       {
+         let newUint32 = self.uint32 - 1
+
+         return SequenceNumber(newUint32)
+       }
+    }    
 }
