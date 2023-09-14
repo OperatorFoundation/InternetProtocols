@@ -42,103 +42,103 @@ extension TCP: MaybeDatable
         //https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
         //https://tools.ietf.org/html/rfc7414 - roadmap to TCP RFCs
         
-        if debugPrint { print("・ start parsing TCP") }
+//        if debugPrint { print("・ start parsing TCP") }
         
         var bits = Bits(data: data)
         
         guard let sourcePort = bits.unpack(bytes: 2) else { return nil }
         guard let sourcePortUint16 = sourcePort.maybeNetworkUint16 else { return nil }
         self.sourcePort = sourcePortUint16
-        if debugPrint
-        { print("・ sourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - \(self.sourcePort)" )
-        }
+//        if debugPrint
+//        { print("・ sourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - \(self.sourcePort)" )
+//        }
         
         guard let destinationPort = bits.unpack(bytes: 2) else { return nil }
         guard let destinationPortUint16 = destinationPort.maybeNetworkUint16 else { return nil }
         self.destinationPort = destinationPortUint16
-        if debugPrint { print("・ destPort: 0x" + String(format: "%02x", self.destinationPort) + " -  \(self.destinationPort)") }
+//        if debugPrint { print("・ destPort: 0x" + String(format: "%02x", self.destinationPort) + " -  \(self.destinationPort)") }
         
         guard let sequenceNumber = bits.unpack(bytes: 4) else { return nil }
         self.sequenceNumber = sequenceNumber.data
-        if debugPrint
-        {
-            print("・ SequenceNum: 0x", terminator: "")
-            _ = printDataBytes(bytes: sequenceNumber, hexDumpFormat: false, seperator: "", decimal: false)
-        }
+//        if debugPrint
+//        {
+//            print("・ SequenceNum: 0x", terminator: "")
+//            _ = printDataBytes(bytes: sequenceNumber, hexDumpFormat: false, seperator: "", decimal: false)
+//        }
         
         guard let acknowledgementNumber = bits.unpack(bytes: 4) else { return nil }
         self.acknowledgementNumber = acknowledgementNumber.data
-        if debugPrint
-        {
-            print("・ acknowledgementNum: 0x", terminator: "")
-            _ = printDataBytes(bytes: acknowledgementNumber, hexDumpFormat: false, seperator: "", decimal: false)
-        }
+//        if debugPrint
+//        {
+//            print("・ acknowledgementNum: 0x", terminator: "")
+//            _ = printDataBytes(bytes: acknowledgementNumber, hexDumpFormat: false, seperator: "", decimal: false)
+//        }
         
         guard let offsetReservedFlags = bits.unpack(bytes: 2) else { return nil }
         var dataReservedFlagsBits = Bits(data: offsetReservedFlags)
         guard let offsetReservedFlagsUint16 = offsetReservedFlags.maybeNetworkUint16 else { return nil }
-        if debugPrint { print("・ offsetReservedFlags: 0x" + String(format: "%02x", offsetReservedFlagsUint16) + " - 0b" + String(offsetReservedFlagsUint16, radix: 2)) }
+//        if debugPrint { print("・ offsetReservedFlags: 0x" + String(format: "%02x", offsetReservedFlagsUint16) + " - 0b" + String(offsetReservedFlagsUint16, radix: 2)) }
         
         guard let offset = dataReservedFlagsBits.unpack(bits: 4) else { return nil }
         guard let offsetUint8 = offset.maybeNetworkUint8 else { return nil }
         self.offset = offset
-        if debugPrint { print("・ Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2)) }
+//        if debugPrint { print("・ Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2)) }
         
         guard let reserved = dataReservedFlagsBits.unpack(bits: 3) else { return nil }
         guard let reservedUint8 = reserved.maybeNetworkUint8 else { return nil }
         self.reserved = reserved
-        if debugPrint { print("・ reserved: 0x" + String(format: "%02x", reservedUint8) + " - 0b" + String(reservedUint8, radix: 2)) }
+//        if debugPrint { print("・ reserved: 0x" + String(format: "%02x", reservedUint8) + " - 0b" + String(reservedUint8, radix: 2)) }
         
         guard let ns = dataReservedFlagsBits.unpackBool() else { return nil }
         self.ns = ns
-        if debugPrint { print("・ ns: " + String(ns) ) }
+//        if debugPrint { print("・ ns: " + String(ns) ) }
         
         guard let cwr = dataReservedFlagsBits.unpackBool() else { return nil }
         self.cwr = cwr
-        if debugPrint { print("・ cwr: " + String(self.cwr)) }
+//        if debugPrint { print("・ cwr: " + String(self.cwr)) }
         
         guard let ece = dataReservedFlagsBits.unpackBool() else { return nil }
         self.ece = ece
-        if debugPrint { print("・ ece: " + String(self.ece)) }
+//        if debugPrint { print("・ ece: " + String(self.ece)) }
         
         guard let urg = dataReservedFlagsBits.unpackBool() else { return nil }
         self.urg = urg
-        if debugPrint { print("・ urg: " + String(self.urg)) }
+//        if debugPrint { print("・ urg: " + String(self.urg)) }
         
         guard let ack = dataReservedFlagsBits.unpackBool() else { return nil }
         self.ack = ack
-        if debugPrint { print("・ ack: " + String(self.ack)) }
+//        if debugPrint { print("・ ack: " + String(self.ack)) }
         
         guard let psh = dataReservedFlagsBits.unpackBool() else { return nil }
         self.psh = psh
-        if debugPrint { print("・ psh: " + String(self.psh)) }
+//        if debugPrint { print("・ psh: " + String(self.psh)) }
         
         guard let rst = dataReservedFlagsBits.unpackBool() else { return nil }
         self.rst = rst
-        if debugPrint { print("・ rst: " + String(self.rst)) }
+//        if debugPrint { print("・ rst: " + String(self.rst)) }
         
         guard let syn = dataReservedFlagsBits.unpackBool() else { return nil }
         self.syn = syn
-        if debugPrint { print("・ syn: " + String(self.syn)) }
+//        if debugPrint { print("・ syn: " + String(self.syn)) }
         
         guard let fin = dataReservedFlagsBits.unpackBool() else { return nil }
         self.fin = fin
-        if debugPrint { print("・ fin: " + String(self.fin)) }
+//        if debugPrint { print("・ fin: " + String(self.fin)) }
         
         guard let windowSize = bits.unpack(bytes: 2) else { return nil }
         guard let windowSizeUint16 = windowSize.maybeNetworkUint16 else { return nil }
         self.windowSize = windowSizeUint16
-        if debugPrint { print("・ windowSize: 0x" + String(format: "%02x", self.windowSize) + " - 0d" + String(format: "%u", self.windowSize)) }
+//        if debugPrint { print("・ windowSize: 0x" + String(format: "%02x", self.windowSize) + " - 0d" + String(format: "%u", self.windowSize)) }
         
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
         guard let checksumUint16 = checksum.maybeNetworkUint16 else { return nil }
         self.checksum = checksumUint16
-        if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum) + " - 0d" + String(format: "%u", self.checksum)) }
+//        if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum) + " - 0d" + String(format: "%u", self.checksum)) }
 
         guard let urgentPointer = bits.unpack(bytes: 2) else { return nil }
         guard let urgentPointerUint16 = urgentPointer.maybeNetworkUint16 else { return nil }
         self.urgentPointer = urgentPointerUint16
-        if debugPrint { print("・ urgentPointer: 0x" + String(format: "%02x", self.urgentPointer) + " - 0d" + String(format: "%u", self.urgentPointer)) }
+//        if debugPrint { print("・ urgentPointer: 0x" + String(format: "%02x", self.urgentPointer) + " - 0d" + String(format: "%u", self.urgentPointer)) }
         
         if offsetUint8  > 5 && offsetUint8 < 16
         {
@@ -146,15 +146,15 @@ extension TCP: MaybeDatable
             guard let options = bits.unpack(bytes: bytesToRead) else { return nil }
             self.options = options.data
             
-            if debugPrint
-            {
-                print("・ options: ", terminator: "")
-                _ = printDataBytes(bytes: options, hexDumpFormat: false, seperator: " ", decimal: false)
-            }
+//            if debugPrint
+//            {
+//                print("・ options: ", terminator: "")
+//                _ = printDataBytes(bytes: options, hexDumpFormat: false, seperator: " ", decimal: false)
+//            }
         }
         else
         {
-            if debugPrint { print("・ options: nil") }
+//            if debugPrint { print("・ options: nil") }
             self.options = nil
         }
         
@@ -162,16 +162,16 @@ extension TCP: MaybeDatable
         {
             guard let payload = bits.unpack(bytes: Int(bits.count/8)) else { return nil }
             self.payload = payload
-            if debugPrint
-            {
-                print("・ TCP payload:")
-                _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
-                print("")
-            }
+//            if debugPrint
+//            {
+//                print("・ TCP payload:")
+//                _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
+//                print("")
+//            }
         }
         else
         {
-            if debugPrint { print("・ TCP payload: nil\n") }
+//            if debugPrint { print("・ TCP payload: nil\n") }
             self.payload = nil
         }
     }

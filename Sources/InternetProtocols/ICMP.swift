@@ -31,7 +31,7 @@ extension ICMP: MaybeDatable
 {
     public init?(data: Data)
     {
-        if debugPrint { print("・ start parsing UDP") }
+//        if debugPrint { print("・ start parsing UDP") }
         var bits = Bits(data: data)
         
         guard let type = bits.unpackByte() else {
@@ -98,7 +98,7 @@ extension ICMP: MaybeDatable
     
     public var data: Data
     {
-        if debugPrint { print("・ start parsing UDP") }
+//        if debugPrint { print("・ start parsing UDP") }
         var bits = Bits()
         
         guard bits.pack(byte: self.type) else {

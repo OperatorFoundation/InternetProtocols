@@ -23,28 +23,28 @@ extension UDP: MaybeDatable
 {
     public init?(data: Data)
     {
-        if debugPrint { print("・ start parsing UDP") }
+//        if debugPrint { print("・ start parsing UDP") }
         var bits = Bits(data: data)
         
         guard let sourcePort = bits.unpack(bytes: 2) else { return nil }
         guard let sourcePortUint16 = sourcePort.maybeNetworkUint16 else { return nil }
         self.sourcePort = sourcePortUint16
-        if debugPrint { print("・ UDPsourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - 0d" + String(format: "%u", self.sourcePort)) }
+//        if debugPrint { print("・ UDPsourcePort: 0x" + String(format: "%02x", self.sourcePort) + " - 0d" + String(format: "%u", self.sourcePort)) }
         
         guard let destinationPort = bits.unpack(bytes: 2) else { return nil }
         guard let destinationPortUint16 = destinationPort.maybeNetworkUint16 else { return nil }
         self.destinationPort = destinationPortUint16
-        if debugPrint { print("・ UDPdestinationPort: 0x" + String(format: "%02x", self.destinationPort) + " - 0d" + String(format: "%u", self.destinationPort)) }
+//        if debugPrint { print("・ UDPdestinationPort: 0x" + String(format: "%02x", self.destinationPort) + " - 0d" + String(format: "%u", self.destinationPort)) }
         
         guard let length = bits.unpack(bytes: 2) else { return nil }
         guard let lengthUint16 = length.maybeNetworkUint16 else { return nil }
         self.length = lengthUint16
-        if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
+//        if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
         
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
         guard let checksumUint16 = checksum.maybeNetworkUint16 else { return nil }
         self.checksum = checksumUint16
-        if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum)) }
+//        if debugPrint { print("・ checksum: 0x" + String(format: "%02x", self.checksum)) }
         
         //payload
         if Int(bits.count/8) > 0
@@ -52,16 +52,16 @@ extension UDP: MaybeDatable
             guard let payload = bits.unpack(bytes: Int(bits.count/8)) else { return nil }
             
             self.payload = payload
-            if debugPrint
-            {
-                print("・ UDP payload:")
-                _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
-                print("")
-            }
+//            if debugPrint
+//            {
+//                print("・ UDP payload:")
+//                _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
+//                print("")
+//            }
         }
         else
         {
-            if debugPrint { print("・ UDP payload: nil\n") }
+//            if debugPrint { print("・ UDP payload: nil\n") }
             self.payload = nil
         }
     }

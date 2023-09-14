@@ -12,8 +12,6 @@ import Datable
 import Net
 import SwiftHexTools
 
-public var debugPrint: Bool = false
-
 public func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
 {
     var returnString: String = ""
@@ -118,19 +116,16 @@ public struct Packet: Codable
     public var ipv4: IPv4?
     public var tcp: TCP?
     public var udp: UDP?
-    public var debugPrints: Bool?
 
     // Takes an IPv4 packet
     public init(ipv4Bytes: Data, timestamp: Date, debugPrints: Bool = false)
     {
-        debugPrint = debugPrints
-
         self.rawBytes = ipv4Bytes
 
         // Multiply time interval by 1,000,000 before converting to an int to retain microseconds precision
         self.timestamp = Int(timestamp.timeIntervalSince1970 * 1000000)
 
-        if debugPrint
+        if debugPrints
         {
             print("・ timestamp (in microseconds): \(self.timestamp)")
         }
@@ -163,14 +158,12 @@ public struct Packet: Codable
     // Takes an Ethernet packet.
     public init(rawBytes: Data, timestamp: Date,  debugPrints: Bool = false)
     {
-        debugPrint = debugPrints
-        
         self.rawBytes = rawBytes
         
         // Multiply time interval by 1,000,000 before converting to an int to retain microseconds precision
         self.timestamp = Int(timestamp.timeIntervalSince1970 * 1000000)
         
-        if debugPrint
+        if debugPrints
         {
             print("・ timestamp (in microseconds): \(self.timestamp)")
         }

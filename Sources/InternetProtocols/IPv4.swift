@@ -42,7 +42,7 @@ extension IPv4: MaybeDatable
 {
     public init?(data: Data)
     {
-        if debugPrint { print("\n・ InternetProtocols start parsing IPv4") }
+//        if debugPrint { print("\n・ InternetProtocols start parsing IPv4") }
         var bits = Bits(data: data)
         
         //unpack a byte then parse into bits
@@ -53,34 +53,34 @@ extension IPv4: MaybeDatable
         guard let versionUint8 = version.maybeNetworkUint8 else { return nil }
         guard versionUint8 == 4 else { return nil }
         self.version = version //Uint8
-        if debugPrint { print("・ Version: 0x" + String(format: "%02x", versionUint8)) }
+//        if debugPrint { print("・ Version: 0x" + String(format: "%02x", versionUint8)) }
         
         guard let IHL = VerIHLbits.unpack(bits: 4) else { return nil }
         guard let IHLUint8 = IHL.maybeNetworkUint8 else { return nil }
         self.IHL = IHL //Uint8
-        if debugPrint { print("・ IHL: 0x" + String(format: "%02x", IHLUint8)) }
+//        if debugPrint { print("・ IHL: 0x" + String(format: "%02x", IHLUint8)) }
         
         guard let DSCPECN = bits.unpack(bytes: 1) else { return nil }
         var DSCPECNbits = Bits(data: DSCPECN)
         guard let DSCP = DSCPECNbits.unpack(bits: 6) else { return nil }
         guard let DSCPUint8 = DSCP.maybeNetworkUint8 else { return nil }
         self.DSCP = DSCP //Uint8
-        if debugPrint { print("・ DSCP: 0x" + String(format: "%02x", DSCPUint8)) }
+//        if debugPrint { print("・ DSCP: 0x" + String(format: "%02x", DSCPUint8)) }
         
         guard let ECN = DSCPECNbits.unpack(bits: 2) else { return nil }
         guard let ECNUint8 = ECN.maybeNetworkUint8 else { return nil }
         self.ECN = ECN //Uint8
-        if debugPrint { print("・ ECN: 0x" + String(format: "%02x", ECNUint8)) }
+//        if debugPrint { print("・ ECN: 0x" + String(format: "%02x", ECNUint8)) }
         
         guard let length = bits.unpack(bytes: 2) else { return nil }
         guard let lengthUint16 = length.maybeNetworkUint16 else { return nil }
         self.length = lengthUint16
-        if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
+//        if debugPrint { print("・ Length: 0x" + String(format: "%02x", self.length) + " - 0d" + String(format: "%u", self.length)) }
         
         guard let identification = bits.unpack(bytes: 2) else { return nil }
         guard let identificationUint16 = identification.maybeNetworkUint16 else { return nil }
         self.identification = identificationUint16
-        if debugPrint { print("・ Identification: 0x" + String(format: "%02x", self.identification)) }
+//        if debugPrint { print("・ Identification: 0x" + String(format: "%02x", self.identification)) }
         
         guard let flagsFragmentOffset = bits.unpack(bytes: 2) else { return nil }
         var flagsFragmentOffsetbits = Bits(data: flagsFragmentOffset)
@@ -93,20 +93,19 @@ extension IPv4: MaybeDatable
         self.dontFragment = dontFragment
         self.moreFragments = moreFragments
         
-        if debugPrint { print("・ reservedBit: " + String(self.reservedBit) ) }
-        if debugPrint { print("・ dontFragment: " + String(self.dontFragment) ) }
-        if debugPrint { print("・ moreFragments: " + String(self.moreFragments) ) }
-        
+//        if debugPrint { print("・ reservedBit: " + String(self.reservedBit) ) }
+//        if debugPrint { print("・ dontFragment: " + String(self.dontFragment) ) }
+//        if debugPrint { print("・ moreFragments: " + String(self.moreFragments) ) }
         
         guard let fragmentOffset = flagsFragmentOffsetbits.unpack(bits: 13) else { return nil }
         guard let fragmentOffsetUint16 = fragmentOffset.maybeNetworkUint16 else { return nil }
         self.fragmentOffset = fragmentOffsetUint16 //Uint16
-        if debugPrint { print("・ FragmentOffset: 0d" + String(format: "%u", fragmentOffsetUint16)) }
+//        if debugPrint { print("・ FragmentOffset: 0d" + String(format: "%u", fragmentOffsetUint16)) }
         
         guard let ttl = bits.unpack(bytes: 1) else { return nil }
         guard let ttlUint8 = ttl.maybeNetworkUint8 else { return nil }
         self.ttl = ttlUint8
-        if debugPrint { print("・ TTL: 0d" + String(format: "%u", self.ttl)) }
+//        if debugPrint { print("・ TTL: 0d" + String(format: "%u", self.ttl)) }
         
         guard let protocolNumber = bits.unpack(bytes: 1) else
         {
@@ -122,28 +121,28 @@ extension IPv4: MaybeDatable
             return nil
         }
         self.protocolNumber = protocolNumType
-        if debugPrint { print("・ ProtocolNumber: 0d" + String(format: "%u", protocolNumberUint8 ) + " - \(protocolNumType)") }
+//        if debugPrint { print("・ ProtocolNumber: 0d" + String(format: "%u", protocolNumberUint8 ) + " - \(protocolNumType)") }
         
         guard let checksum = bits.unpack(bytes: 2) else { return nil }
         guard let checksumUint16 = checksum.uint16 else { return nil }
         self.checksum = checksumUint16
-        if debugPrint { print("・ Checksum: 0x" + String(format: "%02x", self.checksum)) }
+//        if debugPrint { print("・ Checksum: 0x" + String(format: "%02x", self.checksum)) }
         
         guard let sourceAddress = bits.unpack(bytes: 4) else { return nil }
         self.sourceAddress = sourceAddress.data
-        if debugPrint
-        {
-            print("・ sourceAddress: ", terminator: "")
-            _ = printDataBytes(bytes: self.sourceAddress, hexDumpFormat: false, seperator: ".", decimal: true)
-        }
+//        if debugPrint
+//        {
+//            print("・ sourceAddress: ", terminator: "")
+//            _ = printDataBytes(bytes: self.sourceAddress, hexDumpFormat: false, seperator: ".", decimal: true)
+//        }
         
         guard let destinationAddress = bits.unpack(bytes: 4) else { return nil }
         self.destinationAddress = destinationAddress.data
-        if debugPrint
-        {
-            print("・ destinationAddress: ", terminator: "")
-            _ = printDataBytes(bytes: self.destinationAddress, hexDumpFormat: false, seperator: ".", decimal: true)
-        }
+//        if debugPrint
+//        {
+//            print("・ destinationAddress: ", terminator: "")
+//            _ = printDataBytes(bytes: self.destinationAddress, hexDumpFormat: false, seperator: ".", decimal: true)
+//        }
         
         if IHLUint8 > 5
         {
@@ -153,22 +152,22 @@ extension IPv4: MaybeDatable
                 return nil
             }
             self.options = options
-            if debugPrint
-            {
-                print("・ options: ", terminator: "")
-                _ = printDataBytes(bytes: options, hexDumpFormat: false, seperator: " ", decimal: false)
-            }
+//            if debugPrint
+//            {
+//                print("・ options: ", terminator: "")
+//                _ = printDataBytes(bytes: options, hexDumpFormat: false, seperator: " ", decimal: false)
+//            }
         }
         else
         {
-            if debugPrint { print("・ options: nil") }
+//            if debugPrint { print("・ options: nil") }
             self.options = nil
         }
         
         var payloadLength = lengthUint16 - UInt16(IHLUint8 * 4)
         if payloadLength > bits.count/8
         {
-            if debugPrint { print("・ ⚠️ malformed packet: IPv4 total length exceeds packet length. Attempting to continue parsing packet.") }
+//            if debugPrint { print("・ ⚠️ malformed packet: IPv4 total length exceeds packet length. Attempting to continue parsing packet.") }
             payloadLength = UInt16(bits.count/8)
         }
         
@@ -177,11 +176,11 @@ extension IPv4: MaybeDatable
             return nil
         }
         self.payload = payload
-        if debugPrint
-        {
-            print("・ IPv4 payload:")
-            _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
-        }
+//        if debugPrint
+//        {
+//            print("・ IPv4 payload:")
+//            _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
+//        }
         
         if bits.count > 0
         {
@@ -190,17 +189,17 @@ extension IPv4: MaybeDatable
                 return nil
             }
             self.ethernetPadding = padding
-            if debugPrint
-            {
-                print("・ ethernet padding: ", terminator: "")
-                _ = printDataBytes(bytes: padding, hexDumpFormat: false, seperator: " ", decimal: false)
-                print("")
-            }
+//            if debugPrint
+//            {
+//                print("・ ethernet padding: ", terminator: "")
+//                _ = printDataBytes(bytes: padding, hexDumpFormat: false, seperator: " ", decimal: false)
+//                print("")
+//            }
         }
         else
         {
             self.ethernetPadding = nil
-            if debugPrint { print("・ ethernet padding: nil\n") }
+//            if debugPrint { print("・ ethernet padding: nil\n") }
         }
         
     }

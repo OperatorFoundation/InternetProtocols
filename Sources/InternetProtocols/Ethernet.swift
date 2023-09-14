@@ -25,7 +25,7 @@ extension Ethernet: MaybeDatable
 {
     public init?(data: Data)
     {
-        if debugPrint { print("・ Start parsing Ethernet") }
+//        if debugPrint { print("・ Start parsing Ethernet") }
         var bits = Bits(data: data)
         
         guard let MACDestination = bits.unpack(bytes: 6) else
@@ -33,24 +33,24 @@ extension Ethernet: MaybeDatable
             return nil
         }
         self.MACDestination = MACDestination
-        if debugPrint
-        {
-            print("・ dst: ", terminator: "")
-            _ = printDataBytes(bytes: self.MACDestination, hexDumpFormat: false, seperator: ":", decimal: false)
-            
-        }
+//        if debugPrint
+//        {
+//            print("・ dst: ", terminator: "")
+//            _ = printDataBytes(bytes: self.MACDestination, hexDumpFormat: false, seperator: ":", decimal: false)
+//
+//        }
         
         guard let MACSource = bits.unpack(bytes: 6) else
         {
             return nil
         }
         self.MACSource = MACSource
-        if debugPrint
-        {
-            print("・ src: ", terminator: "")
-            _ = printDataBytes(bytes: self.MACSource, hexDumpFormat: false, seperator: ":", decimal: false)
-            
-        }
+//        if debugPrint
+//        {
+//            print("・ src: ", terminator: "")
+//            _ = printDataBytes(bytes: self.MACSource, hexDumpFormat: false, seperator: ":", decimal: false)
+//
+//        }
         
         // links for type or tag documentation
         // https://en.wikipedia.org/wiki/IEEE_802.1Q
@@ -60,23 +60,23 @@ extension Ethernet: MaybeDatable
         {
             return nil
         }
-        if debugPrint
-        {
-            print("・ typeOrTagPrefix: 0x", terminator: "")
-            _ = printDataBytes(bytes: typeOrTagPrefix, hexDumpFormat: false, seperator: "", decimal: false)
-        }
+//        if debugPrint
+//        {
+//            print("・ typeOrTagPrefix: 0x", terminator: "")
+//            _ = printDataBytes(bytes: typeOrTagPrefix, hexDumpFormat: false, seperator: "", decimal: false)
+//        }
         
         guard var typeOrTagUInt16 = typeOrTagPrefix.maybeNetworkUint16 else
         {
             return nil
         }
-        if debugPrint { print("・ typeOrTagPrefix: 0d\(typeOrTagUInt16)") }
+//        if debugPrint { print("・ typeOrTagPrefix: 0d\(typeOrTagUInt16)") }
         
         
         if typeOrTagUInt16 < 1537 //value represents size and not a type
         {
             self.size = typeOrTagUInt16
-            if debugPrint { print("・ 802.3 Size: 0d\(typeOrTagUInt16)") }
+//            if debugPrint { print("・ 802.3 Size: 0d\(typeOrTagUInt16)") }
             typeOrTagUInt16 = 0x0000
         }
         else
@@ -160,74 +160,73 @@ extension Ethernet: MaybeDatable
             self.type = tempType
             
         case nil:
-            if debugPrint { print("・ This EtherType is unknown: \(String(describing: tempType))") }
+//            if debugPrint { print("・ This EtherType is unknown: \(String(describing: tempType))") }
             self.tag1 = nil
             self.tag2 = nil
             self.type = tempType
             
         default:
-            if debugPrint { print("・ This EtherType is not currently handled: \(String(describing: tempType))") }
+//            if debugPrint { print("・ This EtherType is not currently handled: \(String(describing: tempType))") }
             self.tag1 = nil
             self.tag2 = nil
             self.type = tempType
         }
         
         
-        if let tag1 = self.tag1
-        {
-            if debugPrint
-            {
-                print("・ Tag1: 0x", terminator: "")
-                _ = printDataBytes(bytes: tag1, hexDumpFormat: false, seperator: "", decimal: false)
-            }
-        }
-        else
-        {
-            if debugPrint { print("・ Tag1: nil") }
-        }
+//        if let tag1 = self.tag1
+//        {
+//            if debugPrint
+//            {
+//                print("・ Tag1: 0x", terminator: "")
+//                _ = printDataBytes(bytes: tag1, hexDumpFormat: false, seperator: "", decimal: false)
+//            }
+//        }
+//        else
+//        {
+//            if debugPrint { print("・ Tag1: nil") }
+//        }
         
-        if let tag2 = self.tag2
-        {
-            if debugPrint
-            {
-                print("・ Tag2: 0x", terminator: "")
-                _ = printDataBytes(bytes: tag2, hexDumpFormat: false, seperator: "", decimal: false)
-            }
-        }
-        else
-        {
-            if debugPrint { print("・ Tag2: nil") }
-        }
-        if debugPrint {
-            if let typeUnwrapped = self.type
-            {
-                print("・ EtherType: \(typeUnwrapped)")
-                if let typeUnData = typeUnwrapped.data
-                {
-                    print("・ EtherType: 0x", terminator: "")
-                    _ = printDataBytes(bytes: typeUnData, hexDumpFormat: false, seperator: "", decimal: false)
-                }
-            }
-            else
-            {
-                print("・ Ethertype: nil")
-            }
-            
-            
-        }
-        
+//        if let tag2 = self.tag2
+//        {
+//            if debugPrint
+//            {
+//                print("・ Tag2: 0x", terminator: "")
+//                _ = printDataBytes(bytes: tag2, hexDumpFormat: false, seperator: "", decimal: false)
+//            }
+//        }
+//        else
+//        {
+//            if debugPrint { print("・ Tag2: nil") }
+//        }
+//        if debugPrint {
+//            if let typeUnwrapped = self.type
+//            {
+//                print("・ EtherType: \(typeUnwrapped)")
+//                if let typeUnData = typeUnwrapped.data
+//                {
+//                    print("・ EtherType: 0x", terminator: "")
+//                    _ = printDataBytes(bytes: typeUnData, hexDumpFormat: false, seperator: "", decimal: false)
+//                }
+//            }
+//            else
+//            {
+//                print("・ Ethertype: nil")
+//            }
+//
+//
+//        }
         
         guard let payload = bits.unpack(bytes: Int(bits.count/8)) else
         {
             return nil
         }
         self.payload = payload
-        if debugPrint
-        {
-            print("・ Ethernet payload:")
-            _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
-            print("")
-        }
+//        if debugPrint
+//        {
+//            print("・ Ethernet payload:")
+//            _ = printDataBytes(bytes: payload, hexDumpFormat: true, seperator: "", decimal: false)
+//            print("")
+//        }
     }
     
     
