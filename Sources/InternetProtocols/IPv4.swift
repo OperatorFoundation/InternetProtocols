@@ -340,13 +340,6 @@ extension IPv4
         var results: Data = Data()
         let reservedZero: UInt8 = 0
 
-        print("pseudoHeaderTCP")
-        print("source address: \(self.sourceAddress.count) bytes - \(self.sourceAddress.hex)")
-        print("destination address: \(self.destinationAddress.count) bytes - \(self.destinationAddress.hex)")
-        print("reserved: \(reservedZero.data.count) bytes - \(reservedZero.data.hex)")
-        print("protocolNumber: \(self.protocolNumber.rawValue.data.count) bytes - \(self.protocolNumber.rawValue.data.hex) (\(self.protocolNumber))")
-        print("tcpLength: \(tcpLength.data.count) bytes - \(tcpLength.data.hex) (\(tcpLength))")
-
         results.append(self.sourceAddress)
         results.append(self.destinationAddress)
         results.append(reservedZero.data)
