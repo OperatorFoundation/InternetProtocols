@@ -89,11 +89,11 @@ public func calculateChecksum(bytes: Data) -> UInt16?
     
     for i in 0..<(ourBytes.count/2) //2 bytes at a time
     {
-        let twoBytes = ourBytes.subdata( in: (i*2)..<(i*2+2) )
+        let byteOne = ourBytes[i*2]
+        let byteTwo = ourBytes[i*2+1]
 
-        guard let value = twoBytes.maybeNetworkUint16 else { return nil } //convert bytes to number value
-        
-        sum += UInt32(value) //add number value to sum
+        //add UInt16 number value to sum
+        sum += (UInt32(byteOne) * 256) + UInt32(byteTwo)
     }
 
     var left = (sum >> 16) & 0xFFFF

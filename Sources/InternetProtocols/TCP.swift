@@ -277,8 +277,6 @@ extension TCP
                 return nil
             }
         }
-        
-        
     }
     
     static public func makeChecksumBytes(ipv4: IPv4, tcp: TCP, includeChecksum: Bool = false) -> Data
