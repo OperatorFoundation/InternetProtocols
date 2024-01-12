@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/OperatorFoundation/Bits.git", branch: "release"),
-        .package(url: "https://github.com/OperatorFoundation/Datable.git", branch: "release"),
+        .package(url: "https://github.com/OperatorFoundation/Datable.git", branch: "4.0.0"),
         .package(url: "https://github.com/OperatorFoundation/Net.git", branch: "release"),
         .package(url: "https://github.com/OperatorFoundation/SwiftHexTools.git", branch: "release"),
     ],
