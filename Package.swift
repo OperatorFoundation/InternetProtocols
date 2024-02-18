@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/OperatorFoundation/Bits", from: "2.0.4"),
         .package(url: "https://github.com/OperatorFoundation/Datable", from: "4.0.1"),
-        .package(url: "https://github.com/OperatorFoundation/Net", from: "0.0.9"),
+        .package(url: "https://github.com/OperatorFoundation/Net", from: "0.0.10"),
         .package(url: "https://github.com/OperatorFoundation/SwiftHexTools", from: "1.2.6"),
     ],
     targets: [
