@@ -15,10 +15,10 @@ let package = Package(
             targets: ["InternetProtocols"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/OperatorFoundation/Bits.git", branch: "release"),
-        .package(url: "https://github.com/OperatorFoundation/Datable.git", branch: "4.0.0"),
-        .package(url: "https://github.com/OperatorFoundation/Net.git", branch: "release"),
-        .package(url: "https://github.com/OperatorFoundation/SwiftHexTools.git", branch: "1.2.6"),
+        .package(url: "https://github.com/OperatorFoundation/Bits", from: "2.0.4"),
+        .package(url: "https://github.com/OperatorFoundation/Datable", from: "4.0.1"),
+        .package(url: "https://github.com/OperatorFoundation/Net", from: "0.0.9"),
+        .package(url: "https://github.com/OperatorFoundation/SwiftHexTools", from: "1.2.6"),
     ],
     targets: [
         .target(
