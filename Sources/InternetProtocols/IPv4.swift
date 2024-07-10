@@ -413,13 +413,13 @@ extension IPv4
     }
     
     // returns IPv4 header with TCP payload
-    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
+    public init?(sourceAddress: IPv4Address, destinationAddress: IPv4Address, sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, psh: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
     {
         guard let ipv4 = try IPv4(sourceAddress: sourceAddress, destinationAddress: destinationAddress, payload: nil, protocolNumber: IPprotocolNumber.TCP) else {
             return nil
         }
         
-        guard let tcp = try TCP(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber, acknowledgementNumber: acknowledgementNumber, syn: syn, ack: ack, fin: fin, rst: rst, windowSize: windowSize, payload: payload, ipv4: ipv4) else {
+        guard let tcp = try TCP(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber, acknowledgementNumber: acknowledgementNumber, syn: syn, ack: ack, psh: psh, fin: fin, rst: rst, windowSize: windowSize, payload: payload, ipv4: ipv4) else {
             return nil
         }
         

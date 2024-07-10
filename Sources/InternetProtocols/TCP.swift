@@ -367,20 +367,20 @@ extension TCP
 {
     // does not calculate checksum
     // used exclusively for the IPv4 init with TCP payload
-    public init(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
+    public init(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, psh: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil) throws
     {
         let reserved: Bits! = Bits(byte: 0, droppingFromLeft: 5)
 
         // does not calculate checksum
-        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: 0, urgentPointer: 0, options: nil, payload: payload)
+        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: psh, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: 0, urgentPointer: 0, options: nil, payload: payload)
     }
     
     // does calculate checksum, but requires IPv4 parameter
-    public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil, ipv4: IPv4) throws
+    public init?(sourcePort: UInt16, destinationPort: UInt16, sequenceNumber: SequenceNumber = SequenceNumber(0), acknowledgementNumber: SequenceNumber = SequenceNumber(0), syn: Bool = false, ack: Bool = false, psh: Bool = false, fin: Bool = false, rst: Bool = false, windowSize: UInt16, payload: Data? = nil, ipv4: IPv4) throws
     {
         let reserved: Bits! = Bits(byte: 0, droppingFromLeft: 5)
         
-        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: false, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: nil, urgentPointer: 0, options: nil, payload: payload, ipv4: ipv4)
+        self.init(sourcePort: sourcePort, destinationPort: destinationPort, sequenceNumber: sequenceNumber.data, acknowledgementNumber: acknowledgementNumber.data, offset: TCP.tcpDataOffsetNoOptions, reserved: reserved, ns: false, cwr: false, ece: false, urg: false, ack: ack, psh: psh, rst: rst, syn: syn, fin: fin, windowSize: windowSize, checksum: nil, urgentPointer: 0, options: nil, payload: payload, ipv4: ipv4)
     }
 }
 
