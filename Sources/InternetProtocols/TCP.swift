@@ -76,7 +76,7 @@ extension TCP: MaybeDatable
         
         guard let offsetReservedFlags = bits.unpack(bytes: 2) else { return nil }
         var dataReservedFlagsBits = Bits(data: offsetReservedFlags)
-        guard let offsetReservedFlagsUint16 = offsetReservedFlags.maybeNetworkUint16 else { return nil }
+        guard let _ = offsetReservedFlags.maybeNetworkUint16 else { return nil }
 //        if debugPrint { print("・ offsetReservedFlags: 0x" + String(format: "%02x", offsetReservedFlagsUint16) + " - 0b" + String(offsetReservedFlagsUint16, radix: 2)) }
         
         guard let offset = dataReservedFlagsBits.unpack(bits: 4) else { return nil }
@@ -85,7 +85,7 @@ extension TCP: MaybeDatable
 //        if debugPrint { print("・ Offset: 0x" + String(format: "%02x", offsetUint8) + " - 0b" + String(offsetUint8, radix: 2)) }
         
         guard let reserved = dataReservedFlagsBits.unpack(bits: 3) else { return nil }
-        guard let reservedUint8 = reserved.maybeNetworkUint8 else { return nil }
+        guard let _ = reserved.maybeNetworkUint8 else { return nil }
         self.reserved = reserved
 //        if debugPrint { print("・ reserved: 0x" + String(format: "%02x", reservedUint8) + " - 0b" + String(reservedUint8, radix: 2)) }
         
@@ -341,7 +341,7 @@ extension TCP
 //        print("@ window size: \(tcp.windowSize.maybeNetworkData!.count)")
 //        print("@ urgent: \(tcp.urgentPointer.maybeNetworkData!.count)")
 
-        if let optionsData = tcp.options
+        if tcp.options != nil
         {
 //            print("@ options: \(optionsData.data.count)")
         }
@@ -350,7 +350,7 @@ extension TCP
 //            print("@ no options")
         }
 
-        if let payloadData = tcp.payload
+        if tcp.payload != nil
         {
 //            print("@ payload: \(payloadData.count)")
         }
