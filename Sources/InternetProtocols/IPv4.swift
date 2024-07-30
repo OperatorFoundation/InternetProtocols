@@ -63,12 +63,12 @@ extension IPv4: MaybeDatable
         guard let DSCPECN = bits.unpack(bytes: 1) else { return nil }
         var DSCPECNbits = Bits(data: DSCPECN)
         guard let DSCP = DSCPECNbits.unpack(bits: 6) else { return nil }
-        guard let DSCPUint8 = DSCP.maybeNetworkUint8 else { return nil }
+        guard let _ = DSCP.maybeNetworkUint8 else { return nil }
         self.DSCP = DSCP //Uint8
 //        if debugPrint { print("・ DSCP: 0x" + String(format: "%02x", DSCPUint8)) }
         
         guard let ECN = DSCPECNbits.unpack(bits: 2) else { return nil }
-        guard let ECNUint8 = ECN.maybeNetworkUint8 else { return nil }
+        guard let _ = ECN.maybeNetworkUint8 else { return nil }
         self.ECN = ECN //Uint8
 //        if debugPrint { print("・ ECN: 0x" + String(format: "%02x", ECNUint8)) }
         
@@ -112,7 +112,7 @@ extension IPv4: MaybeDatable
             _ = printDataBytes(bytes: bits.data, hexDumpFormat: false, seperator: ".", decimal: true)
             return nil
         } //fix should use IPprotocolNumber()
-        guard let protocolNumberUint8 = protocolNumber.maybeNetworkUint8 else
+        guard let _ = protocolNumber.maybeNetworkUint8 else
         {
             return nil
         }
